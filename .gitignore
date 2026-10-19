@@ -1,0 +1,16 @@
+# Base de datos y clave secreta: se generan solas al ejecutar, NO se suben a GitHub
+instancia/
+*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Sistema
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
