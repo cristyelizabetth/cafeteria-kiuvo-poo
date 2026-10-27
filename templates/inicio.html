@@ -1,14 +1,26 @@
 {% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
 {% block contenido %}
 <section class="portada">
-  <h1>Tu almuerzo, sin hacer fila</h1>
-  <p>Reserva el almuerzo del día, compra bebidas y snacks, y pasa a recogerlos a la hora que elijas.</p>
-  <a class="boton" href="{{ url_for('almuerzos') }}">Ver almuerzos</a>
-  <a class="boton secundario" href="{{ url_for('tienda') }}">Ir a la tienda</a>
+  <div class="portada__texto">
+    <p class="etiqueta">Cafetería universitaria</p>
+    <h1>Tu almuerzo listo, sin hacer fila.</h1>
+    <p class="portada__bajada">Reserva el plato del día, compra algo de la tienda y recógelo en la cafetería cuando salgas de clase.</p>
+    <div class="acciones">
+      {% if usuario %}
+        <a class="boton" href="{{ url_for(usuario.pagina_principal()) }}">
+          {% if usuario.puede_comprar() %}Ver almuerzos{% else %}Ir al panel{% endif %}
+        </a>
+      {% else %}
+        <a class="boton" href="{{ url_for('auth.registro') }}">Crear cuenta</a>
+        <a class="boton boton--borde" href="{{ url_for('auth.login') }}">Ya tengo cuenta</a>
+      {% endif %}
+    </div>
+  </div>
+  <ul class="pasos">
+    <li><strong>1. Elige</strong><span>Almuerzos del día y productos de la tienda con existencias reales.</span></li>
+    <li><strong>2. Paga</strong><span>En caja al retirar o con tarjeta (simulado).</span></li>
+    <li><strong>3. Recoge</strong><span>Tu pedido te espera en la cafetería. ¿Cambio de planes? Cancélalo.</span></li>
+  </ul>
 </section>
-
-<h2>Almuerzos de hoy</h2>
-<div class="cuadricula">
-  {% for p in almuerzos %}{% include "_tarjeta.html" %}{% endfor %}
-</div>
 {% endblock %}

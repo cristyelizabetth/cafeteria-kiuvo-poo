@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}Crear cuenta{% endblock %}
+{% block contenido %}
+<section class="tarjeta-form">
+  <h1>Crear cuenta</h1>
+  <p class="nota">Las cuentas nuevas son de estudiante.</p>
+  <form method="post" class="formulario" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Nombre completo
+      <input type="text" name="nombre" value="{{ request.form.get('nombre', '') }}" maxlength="80" autocomplete="name" required>
+    </label>
+    <label>Correo
+      <input type="email" name="correo" value="{{ request.form.get('correo', '') }}" maxlength="120" autocomplete="email" required>
+    </label>
+    <label>Contraseña
+      <input type="password" name="contrasena" autocomplete="new-password" minlength="8" required>
+      <small>Mínimo 8 caracteres, con al menos una letra y un número.</small>
+    </label>
+    <label>Confirmar contraseña
+      <input type="password" name="confirmacion" autocomplete="new-password" required>
+    </label>
+    <fieldset class="grupo">
+      <legend>Pregunta de seguridad</legend>
+      <small>Te servirá para recuperar tu contraseña si la olvidas.</small>
+      <label>Pregunta
+        <select name="pregunta" required>
+          {% for p in preguntas %}
+            <option value="{{ p }}" {% if request.form.get('pregunta') == p %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Respuesta
+        <input type="text" name="respuesta" maxlength="80" autocomplete="off" required>
+        <small>No importan mayúsculas ni espacios de más.</small>
+      </label>
+    </fieldset>
+    <button type="submit" class="boton boton--ancho">Crear cuenta</button>
+  </form>
+  <p class="form-enlaces"><a href="{{ url_for('auth.login') }}">Ya tengo cuenta</a></p>
+</section>
+{% endblock %}

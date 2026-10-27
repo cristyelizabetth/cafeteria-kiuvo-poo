@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Recuperar contraseña{% endblock %}
+{% block contenido %}
+<section class="tarjeta-form">
+  <h1>Responde tu pregunta</h1>
+  <p class="nota">Paso 2 de 2 · Cuenta: <strong>{{ correo }}</strong></p>
+  <form method="post" class="formulario" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>{{ pregunta }}
+      <input type="text" name="respuesta" autocomplete="off" required>
+    </label>
+    <label>Contraseña nueva
+      <input type="password" name="contrasena" autocomplete="new-password" minlength="8" required>
+      <small>Mínimo 8 caracteres, con al menos una letra y un número.</small>
+    </label>
+    <label>Confirmar contraseña nueva
+      <input type="password" name="confirmacion" autocomplete="new-password" required>
+    </label>
+    <button type="submit" class="boton boton--ancho">Cambiar contraseña</button>
+  </form>
+  <p class="form-enlaces"><a href="{{ url_for('auth.recuperar') }}">Usar otro correo</a></p>
+</section>
+{% endblock %}

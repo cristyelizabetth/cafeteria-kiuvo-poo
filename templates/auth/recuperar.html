@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Recuperar contraseña{% endblock %}
+{% block contenido %}
+<section class="tarjeta-form">
+  <h1>¿Olvidaste tu contraseña?</h1>
+  <p class="nota">Paso 1 de 2 · Escribe el correo con el que te registraste.</p>
+  <form method="post" class="formulario" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Correo
+      <input type="email" name="correo" value="{{ request.form.get('correo', '') }}" autocomplete="email" required>
+    </label>
+    <button type="submit" class="boton boton--ancho">Continuar</button>
+  </form>
+  <p class="form-enlaces"><a href="{{ url_for('auth.login') }}">Volver a iniciar sesión</a></p>
+</section>
+{% endblock %}

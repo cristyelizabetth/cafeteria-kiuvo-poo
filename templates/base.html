@@ -3,41 +3,67 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block titulo %}Cafetería Kiuvo{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>{% block titulo %}Cafetería Kiuvo{% endblock %} · Kiuvo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
 </head>
 <body>
   <header class="barra">
-    <a class="marca" href="{{ url_for('inicio') }}">☕ Cafetería Kiuvo</a>
-    <nav>
-      {% if usuario and usuario.es_admin %}
-        <a href="{{ url_for('admin_pedidos') }}">Pedidos</a>
-        <a href="{{ url_for('admin_productos') }}">Menú e inventario</a>
-      {% else %}
-        <a href="{{ url_for('almuerzos') }}">Almuerzos</a>
-        <a href="{{ url_for('tienda') }}">Tienda</a>
-        <a href="{{ url_for('ver_carrito') }}">Carrito{% if items_carrito %} <span class="contador">{{ items_carrito }}</span>{% endif %}</a>
-        {% if usuario %}<a href="{{ url_for('mis_pedidos') }}">Mis pedidos</a>{% endif %}
-      {% endif %}
-      {% if usuario %}
-        <form method="post" action="{{ url_for('logout') }}" class="en-linea">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="enlace">Salir ({{ usuario.nombre }})</button>
-        </form>
-      {% else %}
-        <a href="{{ url_for('login') }}">Entrar</a>
-        <a class="boton pequeno" href="{{ url_for('registro') }}">Crear cuenta</a>
-      {% endif %}
-    </nav>
+    <div class="barra__contenido">
+      <a class="marca" href="{{ url_for('auth.inicio') }}">
+        <span class="marca__icono" aria-hidden="true">K</span>
+        <span>Kiuvo</span>
+      </a>
+
+      {# Menú para celular: el checkbox abre y cierra el menú sin JavaScript #}
+      <input type="checkbox" id="menu-abierto" class="menu__control">
+      <label for="menu-abierto" class="menu__boton" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+      </label>
+
+      <nav class="menu" aria-label="Principal">
+        {% if usuario and usuario.puede_comprar() %}
+          <a href="{{ url_for('estudiante.almuerzos') }}">Almuerzos</a>
+          <a href="{{ url_for('estudiante.tienda') }}">Tienda</a>
+          <a href="{{ url_for('estudiante.mis_pedidos') }}">Mis pedidos</a>
+          <a href="{{ url_for('estudiante.carrito') }}" class="menu__carrito">
+            Carrito <span class="insignia">{{ cantidad_carrito }}</span>
+          </a>
+        {% elif usuario and usuario.puede_gestionar_inventario() %}
+          <a href="{{ url_for('admin.panel') }}">Panel</a>
+          <a href="{{ url_for('admin.inventario') }}">Inventario</a>
+          <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
+        {% endif %}
+
+        {% if usuario %}
+          <span class="menu__usuario">{{ usuario.nombre }} · {{ usuario.descripcion_rol() }}</span>
+          <form method="post" action="{{ url_for('auth.logout') }}" class="menu__salir">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="boton boton--borde boton--chico">Salir</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Iniciar sesión</a>
+          <a href="{{ url_for('auth.registro') }}" class="boton boton--chico">Crear cuenta</a>
+        {% endif %}
+      </nav>
+    </div>
   </header>
 
-  <main>
-    {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
-      <p class="mensaje {{ categoria }}">{{ mensaje }}</p>
-    {% endfor %}
+  <main class="contenido">
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% if mensajes %}
+        <div class="mensajes">
+          {% for categoria, mensaje in mensajes %}
+            <p class="mensaje mensaje--{{ categoria }}" role="status">{{ mensaje }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     {% block contenido %}{% endblock %}
   </main>
 
-  <footer>Cafetería Kiuvo</footer>
+  <footer class="pie">
+    <p>Cafetería Kiuvo · Key Institute</p>
+  </footer>
 </body>
 </html>

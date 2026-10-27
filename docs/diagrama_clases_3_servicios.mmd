@@ -1,0 +1,90 @@
+---
+title: Vista 3 - Servicios, seguridad y excepciones
+---
+classDiagram
+    direction TB
+    %% SERVICIOS (lógica)
+    class ServicioAutenticacion {
+        #UsuarioDAO _usuarios
+        +registrar_estudiante(...) Estudiante
+        +iniciar_sesion(correo, contrasena) Usuario
+        +obtener_pregunta(correo) str
+        +restablecer_contrasena(...)
+    }
+    class ServicioPedidos {
+        #ProductoDAO _productos
+        #PedidoDAO _pedidos
+        +confirmar_compra(usuario, carrito, metodo)
+        +cancelar(usuario, pedido_id)
+        +pedidos_de(usuario) list
+    }
+    class ServicioInventario {
+        #ProductoDAO _productos
+        +crear(tipo, formulario) Producto
+        +obtener(id) Producto
+        +actualizar(id, formulario)
+        +cambiar_visibilidad(id)
+        +reponer(id, cantidad)
+        +eliminar(id)
+    }
+    ServicioAutenticacion "1" o-- "1" UsuarioDAO
+    ServicioAutenticacion "1" o-- "2" LimitadorIntentos
+    ServicioPedidos "1" o-- "1" PedidoDAO
+    ServicioPedidos "1" o-- "1" ProductoDAO
+    ServicioPedidos ..> MetodoPago
+    ServicioInventario "1" o-- "1" ProductoDAO
+
+    %% SEGURIDAD
+    class ValidadorContrasena {
+        +LONGITUD_MINIMA$ int
+        +errores(contrasena)$ list
+        +validar(contrasena)$
+    }
+    class LimitadorIntentos {
+        -dict _fallos
+        -dict _bloqueados
+        +segundos_restantes(clave) float
+        +registrar_fallo(clave)
+        +reiniciar(clave)
+    }
+    class ProtectorCSRF {
+        +token(sesion) str
+        +es_valido(sesion, token) bool
+    }
+    Usuario ..> ValidadorContrasena : usa
+
+    %% EXCEPCIONES
+    class ErrorCafeteria {
+        <<exception>>
+    }
+    class DatosInvalidos {
+        <<exception>>
+    }
+    class InventarioInsuficiente {
+        <<exception>>
+    }
+    class ErrorBaseDatos {
+        <<exception>>
+    }
+    class RegistroDuplicado {
+        <<exception>>
+    }
+    class RegistroEnUso {
+        <<exception>>
+    }
+    ErrorCafeteria <|-- DatosInvalidos
+    ErrorCafeteria <|-- InventarioInsuficiente
+    ErrorCafeteria <|-- ErrorBaseDatos
+    ErrorBaseDatos <|-- RegistroDuplicado
+    ErrorBaseDatos <|-- RegistroEnUso
+    DAO ..> ErrorBaseDatos : lanza
+
+    class UsuarioDAO
+    class ProductoDAO
+    class PedidoDAO
+    class MetodoPago {
+        <<abstract>>
+    }
+    class Usuario {
+        <<abstract>>
+    }

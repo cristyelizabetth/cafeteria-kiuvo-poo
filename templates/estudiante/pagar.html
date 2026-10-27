@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block titulo %}Pagar{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <h1>Confirmar pedido</h1>
+  <p>Este pago es una simulación: no se cobra dinero real.</p>
+</header>
+
+<div class="pago">
+  <section class="pago__resumen">
+    <h2>Resumen</h2>
+    <ul class="detalle">
+      {% for item in carrito.items %}
+        <li><span>{{ item.cantidad }} × {{ item.producto.nombre }}</span><span>{{ item.subtotal|dinero }}</span></li>
+      {% endfor %}
+      <li class="detalle__total"><span>Total</span><span>{{ carrito.total|dinero }}</span></li>
+    </ul>
+  </section>
+
+  <form method="post" class="pago__form formulario">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <fieldset class="grupo">
+      <legend>Método de pago</legend>
+      {% for m in metodos %}
+        <label class="opcion">
+          <input type="radio" name="metodo" value="{{ m.CLAVE }}" {% if loop.first %}checked{% endif %}>
+          <span><strong>{{ m.nombre() }}</strong><small>{{ m.descripcion() }}</small></span>
+        </label>
+      {% endfor %}
+    </fieldset>
+    <button type="submit" class="boton boton--ancho">Confirmar y pagar {{ carrito.total|dinero }}</button>
+    <a href="{{ url_for('estudiante.carrito') }}" class="form-enlaces">Volver al carrito</a>
+  </form>
+</div>
+{% endblock %}

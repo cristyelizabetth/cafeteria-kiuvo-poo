@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titulo %}Pedidos{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <h1>Pedidos</h1>
+  <p>Reservas y compras de los estudiantes, para preparar lo que hay que entregar.</p>
+</header>
+
+<nav class="filtros" aria-label="Estado">
+  <a href="{{ url_for('admin.pedidos') }}" class="filtro {% if not estado_actual %}filtro--activo{% endif %}">Todos</a>
+  {% for e in estados %}
+    <a href="{{ url_for('admin.pedidos', estado=e.value) }}" class="filtro {% if e.value == estado_actual %}filtro--activo{% endif %}">{{ e.texto }}</a>
+  {% endfor %}
+</nav>
+
+<div class="tabla-contenedor">
+  <table class="tabla">
+    <thead><tr><th>#</th><th>Fecha</th><th>Estudiante</th><th>Productos</th><th>Pago</th><th>Total</th><th>Estado</th></tr></thead>
+    <tbody>
+      {% for pedido in pedidos %}
+        <tr>
+          <td data-titulo="#">{{ pedido.id }}</td>
+          <td data-titulo="Fecha">{{ pedido.fecha|fecha }}</td>
+          <td data-titulo="Estudiante">{{ pedido.nombre_cliente }}</td>
+          <td data-titulo="Productos">
+            {% for item in pedido.items %}{{ item.cantidad }} × {{ item.nombre_producto }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+          </td>
+          <td data-titulo="Pago">{{ nombres_pago.get(pedido.metodo_pago, pedido.metodo_pago) }}</td>
+          <td data-titulo="Total">{{ pedido.total|dinero }}</td>
+          <td data-titulo="Estado"><span class="estado estado--{{ pedido.estado.value }}">{{ pedido.estado.texto }}</span></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">No hay pedidos.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

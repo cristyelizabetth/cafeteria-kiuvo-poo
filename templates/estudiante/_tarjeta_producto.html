@@ -1,0 +1,22 @@
+{# Tarjeta de un producto en el catálogo.
+   p.texto_boton() y p.etiqueta_existencias() son polimórficos:
+   un Almuerzo dice "Reservar" y un ProductoTienda "Agregar al carrito". #}
+<article class="producto producto--{{ p.tipo }}">
+  <div class="producto__cabecera">
+    <span class="chip">{{ p.categoria }}</span>
+    <span class="producto__precio">{{ p.precio|dinero }}</span>
+  </div>
+  <h3>{{ p.nombre }}</h3>
+  {% if p.descripcion %}<p class="producto__desc">{{ p.descripcion }}</p>{% endif %}
+  {% if p.detalle_extra() %}<p class="producto__extra">{{ p.detalle_extra() }}</p>{% endif %}
+  <p class="producto__existencias {% if p.existencias_bajas() %}producto__existencias--bajas{% endif %}">
+    {{ p.etiqueta_existencias() }}
+  </p>
+  <form method="post" action="{{ url_for('estudiante.agregar', producto_id=p.id) }}" class="producto__form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="volver" value="{{ request.full_path }}">
+    <label class="oculto-visual" for="cant-{{ p.id }}">Cantidad</label>
+    <input id="cant-{{ p.id }}" type="number" name="cantidad" value="1" min="1" max="{{ [p.existencias, 20]|min }}" class="cantidad">
+    <button type="submit" class="boton">{{ p.texto_boton() }}</button>
+  </form>
+</article>

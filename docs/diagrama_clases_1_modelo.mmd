@@ -1,0 +1,158 @@
+---
+title: Vista 1 - Modelo del dominio
+---
+classDiagram
+    direction TB
+    %% MODELO: usuarios
+    class Usuario {
+        <<abstract>>
+        #int _id
+        #str _nombre
+        #str _correo
+        -str __password_hash
+        #str _pregunta_seguridad
+        -str __respuesta_hash
+        +PREGUNTAS_SEGURIDAD$ tuple
+        +crear(nombre, correo, contrasena, pregunta, respuesta)$ Usuario
+        +construir(rol, datos)$ Usuario
+        +verificar_contrasena(contrasena) bool
+        +cambiar_contrasena(nueva)
+        +verificar_respuesta(respuesta) bool
+        +puede_comprar()* bool
+        +pagina_principal()* str
+        +descripcion_rol()* str
+        +puede_gestionar_inventario() bool
+    }
+    class Estudiante {
+        +ROL$ = "estudiante"
+        +puede_comprar() bool
+        +pagina_principal() str
+        +descripcion_rol() str
+    }
+    class Administrador {
+        +ROL$ = "administrador"
+        +puede_comprar() bool
+        +pagina_principal() str
+        +descripcion_rol() str
+        +puede_gestionar_inventario() bool
+    }
+    Usuario <|-- Estudiante
+    Usuario <|-- Administrador
+
+    %% MODELO: productos
+    class Categoria {
+        #int _id
+        #str _nombre
+        #str _tipo
+        +nombre str
+        +tipo str
+    }
+    class Producto {
+        <<abstract>>
+        #int _id
+        #str _nombre
+        #str _descripcion
+        #str _categoria
+        #float _precio
+        #int _existencias
+        #bool _activo
+        +TABLA_DETALLE$ str
+        +PRECIO_MAXIMO$ float
+        +EXISTENCIAS_MAXIMAS$ int
+        +construir(tipo, datos)$ Producto
+        +tipos()$ tuple
+        +esta_disponible() bool
+        +hay_suficiente(cantidad) bool
+        +descontar(cantidad)
+        +reponer(cantidad)
+        +activar()
+        +desactivar()
+        +estado_inventario() str
+        +texto_boton()* str
+        +etiqueta_existencias()* str
+        +detalle_extra()* str
+        +datos_extra()* dict
+    }
+    class Almuerzo {
+        #str _incluye
+        +CATEGORIAS$ tuple
+        +incluye str
+        +texto_boton() str
+        +etiqueta_existencias() str
+        +datos_extra() dict
+    }
+    class ProductoTienda {
+        #str _presentacion
+        +CATEGORIAS$ tuple
+        +presentacion str
+        +texto_boton() str
+        +etiqueta_existencias() str
+        +datos_extra() dict
+    }
+    Producto <|-- Almuerzo
+    Producto <|-- ProductoTienda
+    Producto "0..*" --> "1" Categoria : pertenece a
+
+    %% MODELO: carrito, pedidos y pagos
+    class Carrito {
+        #dict _items
+        +list avisos
+        +MAXIMO_POR_PRODUCTO$ int
+        +agregar(producto, cantidad)
+        +cambiar_cantidad(producto, cantidad)
+        +quitar(producto_id)
+        +vaciar()
+        +total float
+        +a_dict() dict
+        +desde_dict(datos, producto_dao)$ Carrito
+    }
+    class ItemCarrito {
+        +Producto producto
+        +int cantidad
+        +subtotal float
+    }
+    Carrito "1" *-- "0..*" ItemCarrito : contiene
+    ItemCarrito "0..*" --> "1" Producto
+
+    class Pedido {
+        #int _id
+        +int usuario_id
+        #list _items
+        +str metodo_pago
+        #EstadoPedido _estado
+        +str fecha
+        +desde_carrito(usuario, carrito, metodo)$ Pedido
+        +total float
+        +pertenece_a(usuario) bool
+        +puede_cancelarse() bool
+        +cancelar()
+    }
+    class ItemPedido {
+        +int producto_id
+        +str nombre_producto
+        +float precio_unitario
+        +int cantidad
+        +subtotal float
+    }
+    class EstadoPedido {
+        <<enumeration>>
+        PENDIENTE
+        CANCELADO
+    }
+    Pedido "1" *-- "1..*" ItemPedido : contiene
+    Pedido "1" --> "1" EstadoPedido
+    Pedido "0..*" --> "1" Usuario : hecho por
+    Pedido ..> Carrito : se crea desde
+
+    class MetodoPago {
+        <<abstract>>
+        +disponibles()$ list
+        +obtener(clave)$ MetodoPago
+        +nombre()* str
+        +descripcion()* str
+        +procesar(total)* str
+    }
+    class PagoEnCaja
+    class PagoTarjetaSimulado
+    MetodoPago <|-- PagoEnCaja
+    MetodoPago <|-- PagoTarjetaSimulado

@@ -1,0 +1,68 @@
+---
+title: Vista 2 - Capa DAO (persistencia)
+---
+classDiagram
+    direction TB
+    %% CAPA DAO (acceso a datos)
+    class DAO {
+        <<interface>>
+        #BaseDatos _bd
+        +insertar(entidad)*
+        +buscar_por_id(id)*
+        +listar(filtros)*
+        +actualizar(entidad)*
+        +eliminar(id)*
+        #_a_objeto(fila)*
+        +guardar(entidad)
+        #_conexion() transacción
+        #_confirmar_afectadas(cursor)
+    }
+    class UsuarioDAO {
+        +buscar_por_correo(correo) Usuario
+        +existe_correo(correo) bool
+        +contar(rol) int
+    }
+    class CategoriaDAO {
+        +asegurar(clases_producto)
+        +buscar_id(con, nombre, tipo)$ int
+    }
+    class ProductoDAO {
+        +existe_nombre(nombre, tipo, excluir_id) bool
+        +contar() int
+        -_guardar_detalle(con, producto)$
+    }
+    class PedidoDAO {
+        +cancelar(pedido)
+        +contar(estado) int
+    }
+    DAO <|.. UsuarioDAO
+    DAO <|.. CategoriaDAO
+    DAO <|.. ProductoDAO
+    DAO <|.. PedidoDAO
+    DAO "0..*" o-- "1" BaseDatos : usa
+    UsuarioDAO ..> Usuario : crea
+    CategoriaDAO ..> Categoria : crea
+    ProductoDAO ..> Producto : crea
+    ProductoDAO ..> CategoriaDAO
+    PedidoDAO ..> Pedido : crea
+
+    class BaseDatos {
+        #str _ruta
+        +VERSION_ESQUEMA$ int
+        +conexion() transacción
+        +inicializar()
+        -_migrar_desde_version_1()
+    }
+
+    class Usuario {
+        <<abstract>>
+    }
+    class Categoria
+    class Producto {
+        <<abstract>>
+    }
+    class Pedido
+    class ErrorBaseDatos {
+        <<exception>>
+    }
+    DAO ..> ErrorBaseDatos : lanza

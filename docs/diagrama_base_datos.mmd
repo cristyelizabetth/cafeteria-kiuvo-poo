@@ -1,0 +1,57 @@
+erDiagram
+    usuarios ||--o{ pedidos : "hace"
+    pedidos ||--|{ detalle_pedido : "contiene"
+    productos ||--o{ detalle_pedido : "aparece en"
+    categorias ||--o{ productos : "clasifica"
+    productos ||--o| almuerzos : "si es almuerzo"
+    productos ||--o| productos_tienda : "si es de tienda"
+
+    usuarios {
+        INTEGER id PK
+        TEXT nombre
+        TEXT correo UK
+        TEXT password_hash
+        TEXT rol "estudiante o administrador"
+        TEXT pregunta_seguridad
+        TEXT respuesta_hash
+        TEXT creado_en
+    }
+    categorias {
+        INTEGER id PK
+        TEXT nombre
+        TEXT tipo "almuerzo o tienda"
+    }
+    productos {
+        INTEGER id PK
+        TEXT tipo "almuerzo o tienda"
+        TEXT nombre
+        TEXT descripcion
+        INTEGER categoria_id FK
+        REAL precio
+        INTEGER existencias
+        INTEGER activo "1 visible, 0 oculto"
+    }
+    almuerzos {
+        INTEGER producto_id PK,FK
+        TEXT incluye
+    }
+    productos_tienda {
+        INTEGER producto_id PK,FK
+        TEXT presentacion
+    }
+    pedidos {
+        INTEGER id PK
+        INTEGER usuario_id FK
+        TEXT fecha
+        TEXT estado "pendiente o cancelado"
+        TEXT metodo_pago
+        REAL total
+    }
+    detalle_pedido {
+        INTEGER id PK
+        INTEGER pedido_id FK
+        INTEGER producto_id FK
+        TEXT nombre_producto "copia al comprar"
+        REAL precio_unitario "copia al comprar"
+        INTEGER cantidad
+    }
