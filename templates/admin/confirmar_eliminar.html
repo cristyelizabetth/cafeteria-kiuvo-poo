@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titulo %}Eliminar producto{% endblock %}
+{% block contenido %}
+<section class="tarjeta-form">
+  <h1>¿Eliminar «{{ producto.nombre }}»?</h1>
+  <p>Se borrará del inventario de forma permanente. Esta acción no se puede deshacer.</p>
+  <p class="nota">Si el producto ya aparece en pedidos de estudiantes, no se podrá eliminar para no perder ese historial. En ese caso, ocúltalo.</p>
+  <form method="post" class="acciones">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="boton boton--peligro">Sí, eliminar</button>
+    <a class="boton boton--borde" href="{{ url_for('admin.inventario', tipo=producto.tipo) }}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

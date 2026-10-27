@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Panel{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <h1>Panel de administración</h1>
+  <p>Gestiona los almuerzos y el inventario de la tienda.</p>
+</header>
+
+<div class="indicadores">
+  <a class="indicador" href="{{ url_for('admin.inventario') }}"><strong>{{ resumen.productos }}</strong><span>Productos</span></a>
+  <a class="indicador indicador--alerta" href="{{ url_for('admin.inventario') }}"><strong>{{ resumen.agotados }}</strong><span>Agotados</span></a>
+  <a class="indicador indicador--aviso" href="{{ url_for('admin.inventario') }}"><strong>{{ resumen.bajos }}</strong><span>Existencias bajas</span></a>
+  <a class="indicador" href="{{ url_for('admin.pedidos', estado='pendiente') }}"><strong>{{ resumen.pendientes }}</strong><span>Pedidos pendientes</span></a>
+  <div class="indicador"><strong>{{ resumen.estudiantes }}</strong><span>Estudiantes</span></div>
+</div>
+
+<div class="acciones">
+  <a class="boton" href="{{ url_for('admin.nuevo_producto', tipo='almuerzo') }}">+ Nuevo almuerzo</a>
+  <a class="boton boton--borde" href="{{ url_for('admin.nuevo_producto', tipo='tienda') }}">+ Nuevo producto de tienda</a>
+</div>
+
+<section class="seccion">
+  <h2>Necesitan atención</h2>
+  {% if alertas %}
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead><tr><th>Producto</th><th>Tipo</th><th>Existencias</th><th>Estado</th><th>Reponer</th></tr></thead>
+        <tbody>
+          {% for p in alertas %}
+            <tr>
+              <td data-titulo="Producto"><a href="{{ url_for('admin.editar_producto', producto_id=p.id) }}">{{ p.nombre }}</a></td>
+              <td data-titulo="Tipo">{{ p.NOMBRE_TIPO }}</td>
+              <td data-titulo="Existencias">{{ p.existencias }}</td>
+              <td data-titulo="Estado"><span class="estado estado--{{ p.estado_inventario()|lower }}">{{ p.estado_inventario() }}</span></td>
+              <td data-titulo="Reponer">{% include "admin/_form_reponer.html" %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="nota">Todo el inventario visible tiene existencias suficientes.</p>
+  {% endif %}
+</section>
+{% endblock %}

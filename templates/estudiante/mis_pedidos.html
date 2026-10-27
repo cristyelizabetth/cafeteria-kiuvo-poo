@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}Mis pedidos{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <h1>Mis pedidos</h1>
+  <p>Puedes cancelar un pedido mientras esté pendiente de retiro.</p>
+</header>
+
+{% if pedidos %}
+  <div class="lista">
+    {% for pedido in pedidos %}
+      <article class="pedido pedido--{{ pedido.estado.value }}">
+        <header class="pedido__cabecera">
+          <h2>Pedido #{{ pedido.id }}</h2>
+          <span class="estado estado--{{ pedido.estado.value }}">{{ pedido.estado.texto }}</span>
+        </header>
+        <p class="nota">{{ pedido.fecha|fecha }} · {{ nombres_pago.get(pedido.metodo_pago, pedido.metodo_pago) }}</p>
+        <ul class="detalle">
+          {% for item in pedido.items %}
+            <li><span>{{ item.cantidad }} × {{ item.nombre_producto }}</span><span>{{ item.subtotal|dinero }}</span></li>
+          {% endfor %}
+          <li class="detalle__total"><span>Total</span><span>{{ pedido.total|dinero }}</span></li>
+        </ul>
+        {% if pedido.puede_cancelarse() %}
+          <form method="post" action="{{ url_for('estudiante.cancelar', pedido_id=pedido.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="boton boton--peligro boton--chico">Cancelar pedido</button>
+          </form>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <section class="vacio">
+    <h2>Todavía no tienes pedidos.</h2>
+    <a class="boton" href="{{ url_for('estudiante.almuerzos') }}">Reservar un almuerzo</a>
+  </section>
+{% endif %}
+{% endblock %}

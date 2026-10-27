@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <h1>{{ titulo }}</h1>
+  <p>{{ subtitulo }}</p>
+</header>
+
+{# Filtro por categoría: url_for(request.endpoint, ...) mantiene al usuario en
+   esta misma página (almuerzos o tienda) y solo cambia la categoría. #}
+<nav class="filtros" aria-label="Categorías">
+  <a href="{{ url_for(request.endpoint) }}" class="filtro {% if not categoria_actual %}filtro--activo{% endif %}">Todas</a>
+  {% for c in categorias %}
+    <a href="{{ url_for(request.endpoint, categoria=c) }}" class="filtro {% if c == categoria_actual %}filtro--activo{% endif %}">{{ c }}</a>
+  {% endfor %}
+</nav>
+
+{% if productos %}
+  <div class="cuadricula">
+    {% for p in productos %}
+      {% include "estudiante/_tarjeta_producto.html" %}
+    {% endfor %}
+  </div>
+{% else %}
+  <section class="vacio">
+    <h2>No hay productos disponibles{% if categoria_actual %} en «{{ categoria_actual }}»{% endif %}.</h2>
+    <p>Vuelve más tarde o revisa otra categoría.</p>
+  </section>
+{% endif %}
+{% endblock %}

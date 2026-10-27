@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Carrito{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <h1>Tu carrito</h1>
+</header>
+
+{% if carrito.esta_vacio() %}
+  <section class="vacio">
+    <h2>Tu carrito está vacío.</h2>
+    <div class="acciones acciones--centro">
+      <a class="boton" href="{{ url_for('estudiante.almuerzos') }}">Ver almuerzos</a>
+      <a class="boton boton--borde" href="{{ url_for('estudiante.tienda') }}">Ir a la tienda</a>
+    </div>
+  </section>
+{% else %}
+  <div class="lista">
+    {% for item in carrito.items %}
+      <article class="fila-carrito">
+        <div class="fila-carrito__info">
+          <span class="chip chip--{{ item.producto.tipo }}">{{ item.producto.NOMBRE_TIPO }}</span>
+          <h3>{{ item.producto.nombre }}</h3>
+          <p class="nota">{{ item.producto.precio|dinero }} c/u</p>
+        </div>
+        <form method="post" action="{{ url_for('estudiante.actualizar', producto_id=item.producto.id) }}" class="fila-carrito__cantidad">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="oculto-visual" for="c-{{ item.producto.id }}">Cantidad</label>
+          <input id="c-{{ item.producto.id }}" type="number" name="cantidad" value="{{ item.cantidad }}" min="0" max="{{ [item.producto.existencias, 20]|min }}" class="cantidad">
+          <button type="submit" class="boton boton--borde boton--chico">Actualizar</button>
+        </form>
+        <p class="fila-carrito__subtotal">{{ item.subtotal|dinero }}</p>
+        <form method="post" action="{{ url_for('estudiante.quitar', producto_id=item.producto.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="enlace-peligro">Quitar</button>
+        </form>
+      </article>
+    {% endfor %}
+  </div>
+  <aside class="resumen">
+    <p>Total <strong>{{ carrito.total|dinero }}</strong></p>
+    <a class="boton boton--ancho" href="{{ url_for('estudiante.pagar') }}">Ir a pagar</a>
+  </aside>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,6 @@
+<form method="post" action="{{ url_for('admin.reponer', producto_id=p.id) }}" class="form-linea">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="oculto-visual" for="rep-{{ p.id }}">Cantidad a reponer de {{ p.nombre }}</label>
+  <input id="rep-{{ p.id }}" type="number" name="cantidad" min="1" value="10" class="cantidad">
+  <button type="submit" class="boton boton--borde boton--chico">Reponer</button>
+</form>

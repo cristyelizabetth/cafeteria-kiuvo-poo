@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}{% if producto is not none %}Editar producto{% else %}Nuevo {{ clase.NOMBRE_TIPO|lower }}{% endif %}{% endblock %}
+{% block contenido %}
+{% set editando = producto is not none %}
+{# Si el formulario se envió con errores, se muestran los datos que la persona escribió;
+   si no, los del producto (al editar) o vacío (al crear). #}
+{% macro valor(campo, actual) -%}
+  {{ datos.get(campo, actual if actual is not none else '') }}
+{%- endmacro %}
+
+<section class="tarjeta-form tarjeta-form--ancha">
+  <h1>{% if editando %}Editar «{{ producto.nombre }}»{% else %}Nuevo {{ clase.NOMBRE_TIPO|lower }}{% endif %}</h1>
+  <form method="post" class="formulario" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Nombre
+      <input type="text" name="nombre" maxlength="80" required value="{{ valor('nombre', producto.nombre if editando else none) }}">
+    </label>
+    <label>Descripción
+      <textarea name="descripcion" maxlength="300" rows="3">{{ valor('descripcion', producto.descripcion if editando else none) }}</textarea>
+    </label>
+    <label>Categoría
+      {% set cat_actual = datos.get('categoria', producto.categoria if editando else '') %}
+      <select name="categoria" required>
+        {% for c in clase.CATEGORIAS %}
+          <option value="{{ c }}" {% if c == cat_actual %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="formulario__fila">
+      <label>Precio (US$)
+        <input type="number" name="precio" step="0.01" min="0" required value="{{ valor('precio', '%.2f'|format(producto.precio) if editando else none) }}">
+      </label>
+      <label>Existencias
+        <input type="number" name="existencias" step="1" min="0" required value="{{ valor('existencias', producto.existencias if editando else none) }}">
+      </label>
+    </div>
+    {% if clase.TIPO == 'almuerzo' %}
+      <label>¿Qué incluye?
+        <input type="text" name="incluye" maxlength="120" placeholder="Arroz, ensalada y fresco" value="{{ valor('incluye', producto.incluye if editando else none) }}">
+      </label>
+    {% else %}
+      <label>Presentación
+        <input type="text" name="presentacion" maxlength="120" placeholder="Botella 600 ml" value="{{ valor('presentacion', producto.presentacion if editando else none) }}">
+      </label>
+    {% endif %}
+    <div class="acciones">
+      <button type="submit" class="boton">{% if editando %}Guardar cambios{% else %}Agregar al inventario{% endif %}</button>
+      <a class="boton boton--borde" href="{{ url_for('admin.inventario', tipo=clase.TIPO) }}">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

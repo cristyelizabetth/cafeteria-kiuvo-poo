@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block titulo %}Inventario{% endblock %}
+{% block contenido %}
+<header class="encabezado encabezado--con-acciones">
+  <div>
+    <h1>Inventario</h1>
+    <p>Aquí ves todos los productos, incluso los agotados y los ocultos. Los estudiantes solo ven los que están visibles y tienen existencias.</p>
+  </div>
+  <div class="acciones">
+    <a class="boton boton--chico" href="{{ url_for('admin.nuevo_producto', tipo='almuerzo') }}">+ Almuerzo</a>
+    <a class="boton boton--borde boton--chico" href="{{ url_for('admin.nuevo_producto', tipo='tienda') }}">+ Producto de tienda</a>
+  </div>
+</header>
+
+<nav class="filtros" aria-label="Tipo de producto">
+  <a href="{{ url_for('admin.inventario') }}" class="filtro {% if not tipo_actual %}filtro--activo{% endif %}">Todos</a>
+  {% for clave, clase in tipos.items() %}
+    <a href="{{ url_for('admin.inventario', tipo=clave) }}" class="filtro {% if clave == tipo_actual %}filtro--activo{% endif %}">{{ clase.NOMBRE_TIPO }}</a>
+  {% endfor %}
+</nav>
+{% if categorias %}
+  <nav class="filtros filtros--sub" aria-label="Categoría">
+    <a href="{{ url_for('admin.inventario', tipo=tipo_actual) }}" class="filtro {% if not categoria_actual %}filtro--activo{% endif %}">Todas las categorías</a>
+    {% for c in categorias %}
+      <a href="{{ url_for('admin.inventario', tipo=tipo_actual, categoria=c) }}" class="filtro {% if c == categoria_actual %}filtro--activo{% endif %}">{{ c }}</a>
+    {% endfor %}
+  </nav>
+{% endif %}
+
+<div class="tabla-contenedor">
+  <table class="tabla">
+    <thead>
+      <tr><th>Producto</th><th>Tipo</th><th>Categoría</th><th>Precio</th><th>Existencias</th><th>Estado</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      {% for p in productos %}
+        <tr class="{% if not p.activo %}fila--oculta{% endif %}">
+          <td data-titulo="Producto"><strong>{{ p.nombre }}</strong>{% if p.detalle_extra() %}<br><small>{{ p.detalle_extra() }}</small>{% endif %}</td>
+          <td data-titulo="Tipo">{{ p.NOMBRE_TIPO }}</td>
+          <td data-titulo="Categoría">{{ p.categoria }}</td>
+          <td data-titulo="Precio">{{ p.precio|dinero }}</td>
+          <td data-titulo="Existencias">{{ p.existencias }}</td>
+          <td data-titulo="Estado"><span class="estado estado--{{ p.estado_inventario()|lower }}">{{ p.estado_inventario() }}</span></td>
+          <td data-titulo="Acciones">
+            <div class="acciones-tabla">
+              <a class="boton boton--borde boton--chico" href="{{ url_for('admin.editar_producto', producto_id=p.id) }}">Editar</a>
+              <form method="post" action="{{ url_for('admin.cambiar_visibilidad', producto_id=p.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="boton boton--borde boton--chico">{% if p.activo %}Ocultar{% else %}Mostrar{% endif %}</button>
+              </form>
+              {% include "admin/_form_reponer.html" %}
+              <a class="boton boton--peligro boton--chico" href="{{ url_for('admin.eliminar_producto', producto_id=p.id) }}">Eliminar</a>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">No hay productos con este filtro.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
