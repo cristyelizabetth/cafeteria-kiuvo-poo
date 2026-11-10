@@ -61,7 +61,8 @@ def nuevo_producto(tipo):
     clase = TIPOS[tipo]
     if request.method == "POST":
         try:
-            producto = contenedor.obtener().inventario.crear(tipo, request.form)
+            producto = contenedor.obtener().inventario.crear(tipo, request.form,
+                                                             request.files.get("imagen"))
         except ErrorCafeteria as error:
             flash(str(error), "error")
         else:
@@ -80,7 +81,7 @@ def editar_producto(producto_id):
         abort(404)
     if request.method == "POST":
         try:
-            c.inventario.actualizar(producto_id, request.form)
+            c.inventario.actualizar(producto_id, request.form, request.files.get("imagen"))
         except ErrorCafeteria as error:
             flash(str(error), "error")
         else:

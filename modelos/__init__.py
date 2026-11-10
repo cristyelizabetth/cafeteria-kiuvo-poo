@@ -4,7 +4,7 @@ from modelos.carrito import Carrito, ItemCarrito
 from modelos.categoria import Categoria
 from modelos.excepciones import (ContrasenaInvalida, CorreoYaRegistrado,
                                  CredencialesInvalidas, CuentaBloqueada,
-                                 DatosInvalidos, ErrorBaseDatos, ErrorCafeteria,
+                                 DatosInvalidos, ErrorBaseDatos, ErrorCafeteria, ImagenInvalida,
                                  InventarioInsuficiente, PedidoNoCancelable,
                                  ProductoNoDisponible, RegistroDuplicado,
                                  RegistroEnUso, RegistroNoEncontrado)

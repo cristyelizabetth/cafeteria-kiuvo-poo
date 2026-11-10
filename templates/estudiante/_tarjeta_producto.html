@@ -2,6 +2,7 @@
    p.texto_boton() y p.etiqueta_existencias() son polimórficos:
    un Almuerzo dice "Reservar" y un ProductoTienda "Agregar al carrito". #}
 <article class="producto producto--{{ p.tipo }}">
+  <img class="producto__foto" src="{{ url_imagen(p) }}" alt="{{ p.nombre }}" loading="lazy" width="400" height="300">
   <div class="producto__cabecera">
     <span class="chip">{{ p.categoria }}</span>
     <span class="producto__precio">{{ p.precio|dinero }}</span>

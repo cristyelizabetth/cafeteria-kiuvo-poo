@@ -1,6 +1,7 @@
 """Productos: Producto (abstracta) → Almuerzo y ProductoTienda."""
 
 import math
+import re
 from abc import ABC, abstractmethod
 
 from modelos.excepciones import DatosInvalidos, InventarioInsuficiente
@@ -27,9 +28,14 @@ class Producto(ABC):
     EXISTENCIAS_MAXIMAS = 9999
     REPOSICION_MAXIMA = 1000
 
+    # Nombre seguro de una imagen subida: 32 caracteres hexadecimales + extensión.
+    # Lo genera GestorImagenes; así nadie puede colar una ruta como "../../config.py".
+    PATRON_IMAGEN = re.compile(r"^[a-f0-9]{32}\.(jpg|png|webp)$")
+
     def __init__(self, nombre, descripcion, categoria, precio, existencias,
-                 activo=True, id=None):
+                 activo=True, id=None, imagen=None):
         self._id = id
+        self.imagen = imagen
         self.nombre = nombre
         self.descripcion = descripcion
         self.categoria = categoria
@@ -151,6 +157,23 @@ class Producto(ABC):
         return self._activo
 
     @property
+    def imagen(self):
+        """Nombre del archivo de la foto, o None si usa la ilustración de su categoría."""
+        return self._imagen
+
+    @imagen.setter
+    def imagen(self, valor):
+        if valor in (None, ""):
+            self._imagen = None
+            return
+        if not self.PATRON_IMAGEN.match(valor):
+            raise DatosInvalidos("El nombre de la imagen no es válido.")
+        self._imagen = valor
+
+    def tiene_imagen(self):
+        return self._imagen is not None
+
+    @property
     def tipo(self):
         return self.TIPO
 
@@ -242,8 +265,8 @@ class Almuerzo(Producto):
     UMBRAL_EXISTENCIAS_BAJAS = 5
 
     def __init__(self, nombre, descripcion, categoria, precio, existencias,
-                 incluye="", activo=True, id=None, **_otros):
-        super().__init__(nombre, descripcion, categoria, precio, existencias, activo, id)
+                 incluye="", activo=True, id=None, imagen=None, **_otros):
+        super().__init__(nombre, descripcion, categoria, precio, existencias, activo, id, imagen)
         self.incluye = incluye
 
     @property
@@ -278,8 +301,8 @@ class ProductoTienda(Producto):
     UMBRAL_EXISTENCIAS_BAJAS = 10
 
     def __init__(self, nombre, descripcion, categoria, precio, existencias,
-                 presentacion="", activo=True, id=None, **_otros):
-        super().__init__(nombre, descripcion, categoria, precio, existencias, activo, id)
+                 presentacion="", activo=True, id=None, imagen=None, **_otros):
+        super().__init__(nombre, descripcion, categoria, precio, existencias, activo, id, imagen)
         self.presentacion = presentacion
 
     @property

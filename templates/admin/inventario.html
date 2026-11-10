@@ -35,7 +35,7 @@
     <tbody>
       {% for p in productos %}
         <tr class="{% if not p.activo %}fila--oculta{% endif %}">
-          <td data-titulo="Producto"><strong>{{ p.nombre }}</strong>{% if p.detalle_extra() %}<br><small>{{ p.detalle_extra() }}</small>{% endif %}</td>
+          <td data-titulo="Producto"><div class="celda-producto"><img class="miniatura" src="{{ url_imagen(p) }}" alt="" width="56" height="42" loading="lazy"><div><strong>{{ p.nombre }}</strong>{% if p.detalle_extra() %}<br><small>{{ p.detalle_extra() }}</small>{% endif %}</div></div></td>
           <td data-titulo="Tipo">{{ p.NOMBRE_TIPO }}</td>
           <td data-titulo="Categoría">{{ p.categoria }}</td>
           <td data-titulo="Precio">{{ p.precio|dinero }}</td>

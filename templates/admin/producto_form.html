@@ -10,7 +10,7 @@
 
 <section class="tarjeta-form tarjeta-form--ancha">
   <h1>{% if editando %}Editar «{{ producto.nombre }}»{% else %}Nuevo {{ clase.NOMBRE_TIPO|lower }}{% endif %}</h1>
-  <form method="post" class="formulario" novalidate>
+  <form method="post" class="formulario" enctype="multipart/form-data" novalidate>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Nombre
       <input type="text" name="nombre" maxlength="80" required value="{{ valor('nombre', producto.nombre if editando else none) }}">
@@ -43,6 +43,24 @@
         <input type="text" name="presentacion" maxlength="120" placeholder="Botella 600 ml" value="{{ valor('presentacion', producto.presentacion if editando else none) }}">
       </label>
     {% endif %}
+    <fieldset class="grupo">
+      <legend>Foto del producto</legend>
+      <div class="foto-actual">
+        {% if editando %}
+          <img class="foto-actual__img" src="{{ url_imagen(producto) }}" alt="Foto actual de {{ producto.nombre }}" width="160" height="120">
+          <span class="nota">{% if producto.tiene_imagen() %}Foto actual.{% else %}Sin foto: se muestra la ilustración de su categoría.{% endif %}</span>
+        {% else %}
+          <span class="nota">Si no subes una foto, se mostrará la ilustración de su categoría.</span>
+        {% endif %}
+      </div>
+      <label>{% if editando and producto.tiene_imagen() %}Cambiar foto{% else %}Subir foto{% endif %}
+        <input type="file" name="imagen" accept="image/jpeg,image/png,image/webp">
+        <small>JPG, PNG o WEBP, de hasta 2 MB. Se ve mejor horizontal (4:3).</small>
+      </label>
+      {% if editando and producto.tiene_imagen() %}
+        <label class="opcion opcion--chica"><input type="checkbox" name="quitar_imagen" value="1"> <span>Quitar la foto y usar la ilustración de la categoría</span></label>
+      {% endif %}
+    </fieldset>
     <div class="acciones">
       <button type="submit" class="boton">{% if editando %}Guardar cambios{% else %}Agregar al inventario{% endif %}</button>
       <a class="boton boton--borde" href="{{ url_for('admin.inventario', tipo=clase.TIPO) }}">Cancelar</a>

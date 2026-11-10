@@ -5,13 +5,14 @@ Ejecutar con:   python app.py
 
 from datetime import datetime
 
-from flask import Flask, abort, render_template, request, session
+from flask import Flask, abort, render_template, request, send_from_directory, session, url_for
 
 import contenedor
 import sesion
 from base_datos import BaseDatos
 from config import Configuracion
 from datos_iniciales import cargar_datos_iniciales
+from imagenes import GestorImagenes
 from modelos.excepciones import ErrorBaseDatos
 from dao import CategoriaDAO, PedidoDAO, ProductoDAO, UsuarioDAO
 from rutas import admin, auth, estudiante
@@ -37,6 +38,7 @@ def crear_app(configuracion=Configuracion):
     limitador_recuperacion = LimitadorIntentos(app.config["INTENTOS_LOGIN"],
                                                app.config["SEGUNDOS_BLOQUEO"])
     csrf = ProtectorCSRF()
+    imagenes = GestorImagenes(app.config["CARPETA_IMAGENES"])
     app.extensions[contenedor.CLAVE_EXTENSION] = contenedor.Contenedor(
         base_datos=base_datos,
         usuarios=usuarios,
@@ -45,7 +47,8 @@ def crear_app(configuracion=Configuracion):
         pedidos=pedidos,
         autenticacion=ServicioAutenticacion(usuarios, limitador_login, limitador_recuperacion),
         servicio_pedidos=ServicioPedidos(productos, pedidos),
-        inventario=ServicioInventario(productos),
+        inventario=ServicioInventario(productos, imagenes),
+        imagenes=imagenes,
         csrf=csrf,
     )
 
@@ -86,7 +89,21 @@ def crear_app(configuracion=Configuracion):
             "usuario": usuario,
             "cantidad_carrito": cantidad_carrito,
             "csrf_token": lambda: csrf.token(session),
+            "url_imagen": url_imagen,
         }
+
+    def url_imagen(producto):
+        """La foto del producto o, si no tiene, la ilustración de su categoría."""
+        if producto.tiene_imagen():
+            return url_for("imagen_producto", nombre=producto.imagen)
+        return url_for("static", filename=GestorImagenes.ilustracion_para(producto.categoria))
+
+    @app.route("/imagenes/<nombre>")
+    def imagen_producto(nombre):
+        """Sirve las fotos subidas por el administrador desde instancia/imagenes."""
+        if imagenes.ruta(nombre) is None:
+            abort(404)
+        return send_from_directory(imagenes.carpeta, nombre, max_age=60 * 60 * 24 * 30)
 
     @app.template_filter("dinero")
     def dinero(valor):
@@ -102,6 +119,11 @@ def crear_app(configuracion=Configuracion):
     # 6. Páginas de error
     def pagina_error(codigo, titulo, mensaje):
         return render_template("error.html", codigo=codigo, titulo=titulo, mensaje=mensaje), codigo
+
+    @app.errorhandler(413)
+    def error_413(error):
+        return pagina_error(413, "Archivo demasiado grande",
+                            "La imagen pesa demasiado. Elige una de menos de 2 MB.")
 
     @app.errorhandler(400)
     def error_400(error):

@@ -236,6 +236,10 @@ input:focus, select:focus, textarea:focus, .boton:focus-visible, a:focus-visible
 }
 .producto--almuerzo { border-top: 4px solid var(--acento); }
 .producto--tienda { border-top: 4px solid var(--cafe); }
+.producto__foto {
+  display: block; width: calc(100% + 2rem); max-width: none; height: auto; aspect-ratio: 4 / 3;
+  object-fit: cover; margin: -1rem -1rem .9rem; background: #f3ebe3;
+}
 .producto__cabecera { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; }
 .producto__precio { font-weight: 700; font-size: 1.15rem; }
 .producto__desc { color: var(--texto-suave); font-size: .95rem; }
@@ -251,13 +255,22 @@ input:focus, select:focus, textarea:focus, .boton:focus-visible, a:focus-visible
 }
 .chip--almuerzo { background: #fbe7df; color: var(--acento-oscuro); }
 
+.miniatura { width: 56px; height: 42px; object-fit: cover; border-radius: 8px; flex: none; background: #f3ebe3; }
+.miniatura--carrito { width: 72px; height: 54px; }
+.celda-producto { display: flex; align-items: center; gap: .7rem; text-align: left; }
+.foto-actual { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+.foto-actual__img { width: 160px; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid var(--borde); }
+input[type="file"] { font: inherit; padding: .4rem 0; max-width: 100%; }
+.opcion--chica { padding: .5rem .7rem; font-size: .92rem; }
+
 /* ---------- Carrito y pedidos ---------- */
 .lista { display: grid; gap: .8rem; }
 .fila-carrito, .pedido {
   background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio);
   padding: 1rem;
 }
-.fila-carrito { display: grid; gap: .6rem; }
+.fila-carrito { display: grid; gap: .6rem .9rem; grid-template-columns: auto 1fr; align-items: center; }
+.fila-carrito > :nth-child(n+3) { grid-column: 1 / -1; }
 .fila-carrito h3 { margin: .3rem 0 .1rem; }
 .fila-carrito__cantidad, .form-linea { display: flex; gap: .5rem; align-items: center; }
 .fila-carrito__subtotal { font-weight: 700; font-size: 1.1rem; margin: 0; }
@@ -333,7 +346,8 @@ input:focus, select:focus, textarea:focus, .boton:focus-visible, a:focus-visible
   .cuadricula { grid-template-columns: repeat(2, 1fr); }
   .formulario__fila { grid-template-columns: 1fr 1fr; }
   .indicadores { grid-template-columns: repeat(3, 1fr); }
-  .fila-carrito { grid-template-columns: 1fr auto auto auto; align-items: center; gap: 1rem; }
+  .fila-carrito { grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 1rem; }
+  .fila-carrito > :nth-child(n+3) { grid-column: auto; }
   .resumen { max-width: 360px; margin-left: auto; }
   .encabezado--con-acciones { flex-direction: row; justify-content: space-between; align-items: flex-end; }
   .encabezado--con-acciones .acciones { margin: 0; flex-shrink: 0; }

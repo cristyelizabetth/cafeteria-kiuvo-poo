@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Vegetariano">
+  <rect width="400" height="300" fill="#e3efd8"/>
+  <circle cx="340" cy="60" r="75" fill="#d4e6c3"/>
+  <circle cx="50" cy="250" r="70" fill="#d7e8c7"/>
+  <path d="M90 150h220c0 70-50 110-110 110S90 220 90 150z" fill="#3b2a20"/>
+  <path d="M90 150h220c-2 10-6 20-12 28H102c-6-8-10-18-12-28z" fill="#5a4032"/>
+  <ellipse cx="200" cy="150" rx="110" ry="22" fill="#4d362a"/>
+  <path d="M120 150c10-40 40-62 70-50 18-32 62-34 82-6 26-4 44 22 36 56z" fill="#5f9a46"/>
+  <path d="M150 140c6-20 22-30 38-28M220 120c10-10 26-12 38-4" fill="none" stroke="#86c06a" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="178" cy="136" r="16" fill="#e5533d"/>
+  <circle cx="246" cy="140" r="13" fill="#f2b33d"/>
+  <circle cx="214" cy="128" r="10" fill="#e5533d"/>
+  <path d="M276 104l40-44" stroke="#c9a37a" stroke-width="8" stroke-linecap="round"/>
+  <path d="M292 108l40-44" stroke="#b88f64" stroke-width="8" stroke-linecap="round"/>
+</svg>

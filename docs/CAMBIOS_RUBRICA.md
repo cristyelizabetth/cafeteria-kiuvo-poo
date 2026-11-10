@@ -67,3 +67,23 @@ Además, la base de datos tiene reglas `CHECK` (precio ≥ 0, existencias ≥ 0,
 | `templates/admin/inventario.html`, `templates/admin/confirmar_eliminar.html` (nuevo) | Botón y página de "Eliminar" |
 | `pruebas/test_cafeteria.py` | 45 pruebas (13 nuevas: DAO, CRUD, errores y validaciones) |
 | `docs/` | Diagramas UML en 3 vistas, `CLASES.md`, `BASE_DE_DATOS.md`, `RAMAS.md`, este archivo y `GUIA_DEFENSA.md` |
+
+## Mejora después de la revisión: fotos de los productos
+
+El profesor sugirió ponerle imágenes a los productos para que el sitio sea más llamativo.
+
+| Archivo | Cambio |
+|---|---|
+| `imagenes.py` (nuevo) | Clase `GestorImagenes`: guarda, revisa y borra las fotos |
+| `modelos/producto.py` | Atributo `imagen` (propiedad que valida el nombre) y método `tiene_imagen()` |
+| `modelos/excepciones.py` | `ImagenInvalida` |
+| `base_datos.py` | Columna `productos.imagen`; las bases viejas se actualizan solas (versión 3) |
+| `dao/producto_dao.py` | Lee y guarda la columna `imagen` |
+| `servicios.py` | `ServicioInventario` recibe la foto al crear o editar y borra la vieja al cambiarla o al eliminar el producto |
+| `app.py`, `contenedor.py`, `config.py` | Crean el `GestorImagenes`, ruta `/imagenes/<nombre>` y límite de 3 MB por envío |
+| `rutas/admin.py`, `templates/admin/producto_form.html` | Campo para subir o quitar la foto |
+| `templates/estudiante/_tarjeta_producto.html`, `carrito.html`, `templates/admin/inventario.html` | Muestran la foto |
+| `static/img/categorias/` (nuevo) | Ilustraciones para los productos sin foto |
+| `static/css/estilos.css` | Estilos de fotos y miniaturas |
+| `pruebas/test_cafeteria.py` | 54 pruebas (9 nuevas de imágenes) |
+| `docs/` | Diagramas UML y documentos actualizados |

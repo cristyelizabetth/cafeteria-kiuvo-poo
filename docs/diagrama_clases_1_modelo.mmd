@@ -56,12 +56,14 @@ classDiagram
         #float _precio
         #int _existencias
         #bool _activo
+        #str _imagen
         +TABLA_DETALLE$ str
         +PRECIO_MAXIMO$ float
         +EXISTENCIAS_MAXIMAS$ int
         +construir(tipo, datos)$ Producto
         +tipos()$ tuple
         +esta_disponible() bool
+        +tiene_imagen() bool
         +hay_suficiente(cantidad) bool
         +descontar(cantidad)
         +reponer(cantidad)

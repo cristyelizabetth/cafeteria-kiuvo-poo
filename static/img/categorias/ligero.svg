@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Ligero">
+  <rect width="400" height="300" fill="#e2efe9"/>
+  <circle cx="70" cy="60" r="70" fill="#d3e7de"/>
+  <circle cx="350" cy="250" r="70" fill="#d5e8df"/>
+  <path d="M96 196c0-56 46-92 104-92s104 36 104 92z" fill="#ffffff"/>
+  <path d="M96 196h208c-8 34-50 56-104 56s-96-22-104-56z" fill="#f4f0ea"/>
+  <path d="M112 182c-4-44 30-70 58-60 14-26 54-30 72-6 28-6 52 18 46 66z" fill="#8cc07a"/>
+  <path d="M130 170c4-24 22-38 42-36M206 142c16-14 40-12 54 4" fill="none" stroke="#b6dca4" stroke-width="8" stroke-linecap="round"/>
+  <rect x="160" y="150" width="34" height="24" rx="6" fill="#e9c27a" transform="rotate(-10 177 162)"/>
+  <rect x="214" y="156" width="30" height="22" rx="6" fill="#e9c27a" transform="rotate(12 229 167)"/>
+  <circle cx="200" cy="176" r="12" fill="#f3e9c7"/>
+  <path d="M276 92l58-38" stroke="#7d5a43" stroke-width="7" stroke-linecap="round"/>
+</svg>

@@ -42,7 +42,7 @@ Las rutas preguntan `usuario.puede_comprar()` sin revisar de qué clase es: cada
 ### `Producto` (abstracta) → `Almuerzo`, `ProductoTienda`
 **Archivo:** `modelos/producto.py`
 
-- Atributos comunes: nombre, descripción, categoría, precio, existencias y si está activo (visible).
+- Atributos comunes: nombre, descripción, categoría, precio, existencias, si está activo (visible) y su `imagen` (nombre del archivo de la foto, o `None`).
 - Los atributos son **propiedades con validación** (getters y setters). Así ningún formulario puede meter datos imposibles:
 
 | Propiedad | Vacío | Tipo | Rango |
@@ -52,8 +52,10 @@ Las rutas preguntan `usuario.puede_comprar()` sin revisar de qué clase es: cada
 | `existencias` | "Escribe las existencias." | entero ("2.5" → "sin decimales") | de 0 a 9999 |
 | `categoria` | "Elige una categoría." | debe ser de su tipo | — |
 | `incluye` / `presentacion` | se permite | texto | máx. 120 caracteres |
+| `imagen` | se permite (usa la ilustración) | nombre generado: 32 letras/números + `.jpg`, `.png` o `.webp` | evita nombres como `../../app.py` |
 - `descontar(cantidad)` lanza `InventarioInsuficiente` si no alcanza.
 - `esta_disponible()` → activo y con existencias. Es lo que decide qué ve el estudiante.
+- `tiene_imagen()` → si el admin le subió una foto. Si no, el sitio muestra la ilustración de su categoría.
 - `estado_inventario()` → "Disponible", "Bajo", "Agotado" u "Oculto", para la tabla del admin.
 
 | Método o atributo | `Almuerzo` | `ProductoTienda` |
@@ -157,7 +159,8 @@ Una categoría ("Bebidas", "Vegetariano"…) con su tipo (`almuerzo` o `tienda`)
 |---|---|---|
 | `ServicioAutenticacion` | `servicios.py` | Registro de estudiantes, inicio de sesión con límite de intentos y recuperación de contraseña. |
 | `ServicioPedidos` | `servicios.py` | Confirmar compras (crea el pedido, descuenta inventario y procesa el pago) y cancelar pedidos. |
-| `ServicioInventario` | `servicios.py` | CRUD de productos del admin: crear, ver, editar, ocultar o mostrar, reponer y eliminar. Revisa que no se repitan nombres. |
+| `ServicioInventario` | `servicios.py` | CRUD de productos del admin: crear, ver, editar, ocultar o mostrar, reponer y eliminar. Revisa que no se repitan nombres. Usa `GestorImagenes` para la foto (agregación). |
+| `GestorImagenes` | `imagenes.py` | Guarda las fotos que sube el admin: revisa que pesen menos de 2 MB y que de verdad sean JPG, PNG o WEBP (mira los primeros bytes, no solo la extensión), les pone un nombre al azar y borra las que ya no se usan. Lanza `ImagenInvalida`. |
 | `ValidadorContrasena` | `seguridad.py` | Reglas de contraseña. Sus métodos son de clase (`@classmethod`): se usa sin crear objetos. |
 | `LimitadorIntentos` | `seguridad.py` | Cuenta los intentos fallidos y bloquea 5 minutos al llegar a 5. |
 | `ProtectorCSRF` | `seguridad.py` | Genera y revisa el token secreto de los formularios. |

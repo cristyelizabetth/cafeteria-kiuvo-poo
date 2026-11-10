@@ -42,7 +42,7 @@ Respuesta de seguridad de ambas cuentas (para probar "¿Olvidaste tu contraseña
 python -m unittest discover pruebas -v
 ```
 
-Son 45 pruebas que revisan las clases, la capa DAO (CRUD y errores), la base de datos normalizada, las validaciones, la seguridad y todos los flujos (registro, login, recuperar contraseña, comprar, cancelar, funciones del administrador).
+Son 54 pruebas que revisan las clases, las fotos de los productos, la capa DAO (CRUD y errores), la base de datos normalizada, las validaciones, la seguridad y todos los flujos (registro, login, recuperar contraseña, comprar, cancelar, funciones del administrador).
 
 ---
 
@@ -62,6 +62,7 @@ Son 45 pruebas que revisan las clases, la capa DAO (CRUD y errores), la base de 
 - Crear, editar y **eliminar** almuerzos y productos de tienda (no deja eliminar los que ya se vendieron, para no perder el historial: esos se ocultan).
 - Ocultar o mostrar un producto a los estudiantes.
 - Reponer existencias.
+- **Subir una foto** a cada producto (JPG, PNG o WEBP de hasta 2 MB) o quitarla. Sin foto, se muestra una ilustración de su categoría.
 - Ver los pedidos de los estudiantes.
 - **No puede** comprar ni reservar.
 
@@ -94,6 +95,7 @@ Son 45 pruebas que revisan las clases, la capa DAO (CRUD y errores), la base de 
 | Cookie de sesión `HttpOnly`, `SameSite`, expira en 2 h | Robo de la sesión | `config.py` |
 | Encabezados de seguridad (CSP, X-Frame-Options…) | Clickjacking y scripts inyectados | `app.py` |
 | Escapado automático de Jinja | Inyección de HTML (XSS) | Plantillas |
+| Fotos revisadas por su contenido, máx. 2 MB, con nombre al azar | Subir programas disfrazados de imagen o sobrescribir archivos | `GestorImagenes` |
 | Redirecciones solo internas | Que te manden a un sitio falso | `rutas/auth.py`, `rutas/admin.py` |
 
 ### Variables de entorno (opcionales)
@@ -105,6 +107,7 @@ Son 45 pruebas que revisan las clases, la capa DAO (CRUD y errores), la base de 
 | `KIUVO_COOKIE_SEGURA=1` | Enviar la cookie solo por HTTPS (activar si lo publican en internet). |
 | `KIUVO_ADMIN_PASSWORD` | Contraseña del admin que se crea la primera vez. |
 | `KIUVO_BASE_DATOS` | Ruta de otro archivo de base de datos. |
+| `KIUVO_IMAGENES` | Carpeta donde se guardan las fotos (por defecto `instancia/imagenes/`). |
 
 ---
 
@@ -118,6 +121,7 @@ cafeteria-kiuvo/
 ├── sesion.py               ← usuario actual, permisos por rol, carrito en sesión
 ├── seguridad.py            ← ValidadorContrasena, LimitadorIntentos, ProtectorCSRF
 ├── servicios.py            ← reglas del negocio (autenticación, pedidos, inventario)
+├── imagenes.py             ← GestorImagenes: guarda y revisa las fotos de los productos
 ├── base_datos.py           ← clase BaseDatos: conexión, tablas de SQLite y actualización de bases viejas
 ├── datos_iniciales.py      ← cuentas y productos de ejemplo
 ├── dao/                    ← capa DAO: la única que escribe SQL

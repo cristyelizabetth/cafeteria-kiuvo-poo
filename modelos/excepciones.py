@@ -48,6 +48,10 @@ class CuentaBloqueada(ErrorCafeteria):
         )
 
 
+class ImagenInvalida(ErrorCafeteria):
+    """El archivo subido no es una imagen válida o es demasiado grande."""
+
+
 class ContrasenaInvalida(ErrorCafeteria):
     """La contraseña no cumple las reglas de seguridad."""
 
