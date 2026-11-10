@@ -44,7 +44,10 @@ class Configuracion:
     SESSION_COOKIE_SECURE = os.environ.get("KIUVO_COOKIE_SEGURA") == "1"  # solo HTTPS (activar al publicar)
     PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
 
-    MAX_CONTENT_LENGTH = 1024 * 1024      # rechaza formularios de más de 1 MB
+    # Fotos de los productos (no se suben a GitHub; viven junto a la base de datos)
+    CARPETA_IMAGENES = os.environ.get("KIUVO_IMAGENES", str(CARPETA_INSTANCIA / "imagenes"))
+
+    MAX_CONTENT_LENGTH = 3 * 1024 * 1024  # rechaza envíos de más de 3 MB (fotos de hasta 2 MB)
 
     INTENTOS_LOGIN = 5
     SEGUNDOS_BLOQUEO = 5 * 60

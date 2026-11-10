@@ -76,6 +76,14 @@ LEFT JOIN productos_tienda t ON t.producto_id = p.id
 
 Si mañana el admin sube el pollo de $3.50 a $4.00, el pedido de ayer debe seguir diciendo $3.50. Por eso cada línea guarda su propio `precio_unitario` y `nombre_producto`.
 
+### ¿Dónde se guardan las fotos de los productos?
+
+La foto **no** se guarda dentro de la base de datos (eso la haría pesada y lenta). La columna `productos.imagen` solo guarda el **nombre del archivo**, por ejemplo `3f9a…c21e.jpg`, y el archivo vive en la carpeta `instancia/imagenes/`. Si un producto no tiene foto, `imagen` es `NULL` y el sitio muestra una ilustración según su categoría (`static/img/categorias/`).
+
+El nombre lo genera el programa al azar (`secrets.token_hex`), nunca se usa el nombre que traía el archivo. Así nadie puede subir algo llamado `../../app.py` para sobrescribir el código.
+
+Esta columna se agregó en la versión 3 del esquema: si una base vieja no la tiene, `BaseDatos` la agrega sola con `ALTER TABLE productos ADD COLUMN imagen TEXT` y guarda `PRAGMA user_version = 3`.
+
 ### ¿Por qué los productos se "ocultan" en vez de borrarse?
 
 Un producto que ya aparece en pedidos no se puede borrar sin romper esos pedidos (la llave foránea lo impide). Por eso el admin lo **oculta** (`activo = 0`): deja de verse en el catálogo, pero el historial sigue completo.
@@ -154,6 +162,7 @@ Si no alcanza, no se actualiza ninguna fila, el código lanza `InventarioInsufic
 | Respuesta de seguridad | **No.** Solo su hash (`respuesta_hash`). |
 | Carrito | No va en la base de datos: vive en la sesión del navegador hasta que se paga. |
 | Datos de tarjeta | No se piden ni se guardan (el pago es simulado). |
+| Fotos de productos | El archivo va a `instancia/imagenes/`; la base solo guarda su nombre. |
 
 ## Cómo ver la base de datos por dentro
 

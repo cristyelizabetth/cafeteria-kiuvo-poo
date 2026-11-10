@@ -57,12 +57,14 @@ classDiagram
         #float _precio
         #int _existencias
         #bool _activo
+        #str _imagen
         +TABLA_DETALLE$ str
         +PRECIO_MAXIMO$ float
         +EXISTENCIAS_MAXIMAS$ int
         +construir(tipo, datos)$ Producto
         +tipos()$ tuple
         +esta_disponible() bool
+        +tiene_imagen() bool
         +hay_suficiente(cantidad) bool
         +descontar(cantidad)
         +reponer(cantidad)
@@ -226,9 +228,10 @@ classDiagram
     }
     class ServicioInventario {
         #ProductoDAO _productos
-        +crear(tipo, formulario) Producto
+        #GestorImagenes _imagenes
+        +crear(tipo, formulario, imagen) Producto
         +obtener(id) Producto
-        +actualizar(id, formulario)
+        +actualizar(id, formulario, imagen)
         +cambiar_visibilidad(id)
         +reponer(id, cantidad)
         +eliminar(id)
@@ -239,6 +242,16 @@ classDiagram
     ServicioPedidos "1" o-- "1" ProductoDAO
     ServicioPedidos ..> MetodoPago
     ServicioInventario "1" o-- "1" ProductoDAO
+    class GestorImagenes {
+        +TAMANO_MAXIMO$ int
+        -Path _carpeta
+        +guardar(archivo) str
+        +ruta(nombre) Path
+        +eliminar(nombre)
+        +ilustracion_para(categoria)$ str
+    }
+    ServicioInventario "1" o-- "1" GestorImagenes
+    GestorImagenes ..> ImagenInvalida : lanza
 
     %% ================= SEGURIDAD =================
     class ValidadorContrasena {
@@ -269,6 +282,9 @@ classDiagram
     class InventarioInsuficiente {
         <<exception>>
     }
+    class ImagenInvalida {
+        <<exception>>
+    }
     class ErrorBaseDatos {
         <<exception>>
     }
@@ -280,6 +296,7 @@ classDiagram
     }
     ErrorCafeteria <|-- DatosInvalidos
     ErrorCafeteria <|-- InventarioInsuficiente
+    ErrorCafeteria <|-- ImagenInvalida
     ErrorCafeteria <|-- ErrorBaseDatos
     ErrorBaseDatos <|-- RegistroDuplicado
     ErrorBaseDatos <|-- RegistroEnUso

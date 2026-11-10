@@ -104,7 +104,7 @@ Para cada parte: qué archivos son tuyos, qué tienes que poder explicar, pregun
 - *¿Cómo impiden que el admin compre?* → El decorador `solo_compradores` (en `sesion.py`) pregunta `usuario.puede_comprar()`. El admin responde `False` (polimorfismo) y recibe un 403.
 - *¿Por qué las rutas no tienen SQL?* → Solo reciben la petición, llaman a un servicio y muestran una plantilla. La lógica está en los servicios y los datos en los DAO.
 - *¿Qué pasa si la base de datos falla?* → El DAO lanza `ErrorBaseDatos` y `app.py` tiene un `errorhandler` que muestra "Base de datos no disponible" en vez de un error técnico.
-- *¿Cómo prueban que todo funciona?* → `py -m unittest discover pruebas`: 45 pruebas que simulan un navegador.
+- *¿Cómo prueban que todo funciona?* → `py -m unittest discover pruebas`: 54 pruebas que simulan un navegador.
 
 **Cambios en vivo para practicar:**
 1. *"Que la sesión dure 1 hora."* → `config.py`: `PERMANENT_SESSION_LIFETIME = timedelta(hours=1)`.
@@ -132,5 +132,6 @@ Para cada parte: qué archivos son tuyos, qué tienes que poder explicar, pregun
 
 - **¿Qué es la POO y dónde la usan?** Organizar el programa en clases que juntan datos y comportamiento. Usamos encapsulamiento, herencia, polimorfismo, abstracción y composición (`docs/CLASES.md`, tabla final).
 - **¿Cuál es el flujo de una compra?** Ruta `/pagar` → `ServicioPedidos.confirmar_compra` → `Pedido.desde_carrito` → `PedidoDAO.insertar` (transacción) → `metodo.procesar()` → mensaje.
+- **¿Cómo funcionan las fotos de los productos?** El admin la sube en *Editar* → *Foto del producto*. `ServicioInventario` se la pasa a `GestorImagenes`, que revisa el tamaño (máx. 2 MB) y los primeros bytes del archivo para confirmar que es JPG, PNG o WEBP, y la guarda con un nombre al azar en `instancia/imagenes/`. En la tabla `productos` solo queda el nombre del archivo (columna `imagen`). Si no hay foto, se ve la ilustración de la categoría.
 - **¿Por qué SQLite?** Viene con Python, no necesita servidor y es un solo archivo. Con los DAO se podría cambiar a MySQL sin tocar la lógica.
 - **¿Qué cambiaron después del avance 1?** Base de datos conectada y normalizada (7 tablas), validaciones en tres niveles, capa DAO con CRUD completo, manejo de excepciones y diagrama UML actualizado (`docs/CAMBIOS_RUBRICA.md`).

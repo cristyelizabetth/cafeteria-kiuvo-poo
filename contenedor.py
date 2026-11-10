@@ -9,6 +9,7 @@ from flask import current_app
 
 from base_datos import BaseDatos
 from dao import CategoriaDAO, PedidoDAO, ProductoDAO, UsuarioDAO
+from imagenes import GestorImagenes
 from seguridad import ProtectorCSRF
 from servicios import ServicioAutenticacion, ServicioInventario, ServicioPedidos
 
@@ -26,6 +27,7 @@ class Contenedor:
     servicio_pedidos: ServicioPedidos
     inventario: ServicioInventario
     csrf: ProtectorCSRF
+    imagenes: GestorImagenes
 
 
 def obtener():

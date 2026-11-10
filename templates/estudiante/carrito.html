@@ -17,6 +17,7 @@
   <div class="lista">
     {% for item in carrito.items %}
       <article class="fila-carrito">
+        <img class="miniatura miniatura--carrito" src="{{ url_imagen(item.producto) }}" alt="" width="72" height="54">
         <div class="fila-carrito__info">
           <span class="chip chip--{{ item.producto.tipo }}">{{ item.producto.NOMBRE_TIPO }}</span>
           <h3>{{ item.producto.nombre }}</h3>

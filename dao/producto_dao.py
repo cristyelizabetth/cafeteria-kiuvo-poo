@@ -23,6 +23,7 @@ class ProductoDAO(DAO):
     # LEFT JOIN: cada producto tiene fila en UNA de las dos tablas de detalle.
     _SELECT = """
         SELECT p.id, p.tipo, p.nombre, p.descripcion, p.precio, p.existencias, p.activo,
+               p.imagen,
                c.nombre AS categoria,
                a.incluye,
                t.presentacion
@@ -45,6 +46,7 @@ class ProductoDAO(DAO):
             precio=fila["precio"],
             existencias=fila["existencias"],
             activo=bool(fila["activo"]),
+            imagen=fila["imagen"],
             incluye=fila["incluye"],
             presentacion=fila["presentacion"],
         )
@@ -55,9 +57,9 @@ class ProductoDAO(DAO):
             categoria_id = CategoriaDAO.buscar_id(con, producto.categoria, producto.tipo)
             cursor = con.execute(
                 """INSERT INTO productos (tipo, nombre, descripcion, categoria_id, precio,
-                   existencias, activo) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   existencias, activo, imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (producto.tipo, producto.nombre, producto.descripcion, categoria_id,
-                 producto.precio, producto.existencias, int(producto.activo)),
+                 producto.precio, producto.existencias, int(producto.activo), producto.imagen),
             )
             producto.asignar_id(cursor.lastrowid)
             self._guardar_detalle(con, producto)
@@ -113,9 +115,10 @@ class ProductoDAO(DAO):
             categoria_id = CategoriaDAO.buscar_id(con, producto.categoria, producto.tipo)
             cursor = con.execute(
                 """UPDATE productos SET nombre = ?, descripcion = ?, categoria_id = ?,
-                   precio = ?, existencias = ?, activo = ? WHERE id = ?""",
+                   precio = ?, existencias = ?, activo = ?, imagen = ? WHERE id = ?""",
                 (producto.nombre, producto.descripcion, categoria_id,
-                 producto.precio, producto.existencias, int(producto.activo), producto.id),
+                 producto.precio, producto.existencias, int(producto.activo), producto.imagen,
+                 producto.id),
             )
             self._confirmar_afectadas(cursor)
             self._guardar_detalle(con, producto)

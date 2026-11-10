@@ -15,7 +15,8 @@ class BaseDatos:
     # .db (PRAGMA user_version) para saber si una base vieja necesita actualizarse.
     #   1 = versión original (categoría como texto, almuerzos y tienda en una sola tabla)
     #   2 = versión normalizada (tablas categorias, almuerzos y productos_tienda)
-    VERSION_ESQUEMA = 2
+    #   3 = productos con foto (columna imagen)
+    VERSION_ESQUEMA = 3
 
     ESQUEMA = """
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -48,6 +49,7 @@ class BaseDatos:
         precio        REAL    NOT NULL CHECK (precio >= 0),
         existencias   INTEGER NOT NULL CHECK (existencias >= 0),
         activo        INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
+        imagen        TEXT,          -- nombre del archivo de la foto (NULL = ilustración de la categoría)
         -- La categoría debe existir Y ser del mismo tipo que el producto:
         -- un almuerzo no puede quedar en la categoría "Bebidas".
         FOREIGN KEY (categoria_id, tipo) REFERENCES categorias (id, tipo)
@@ -141,6 +143,7 @@ class BaseDatos:
             self._migrar_desde_version_1()
         with self.conexion() as con:
             con.executescript(self.ESQUEMA)
+            self._agregar_columna_imagen(con)
             con.execute(f"PRAGMA user_version = {self.VERSION_ESQUEMA}")
         try:
             with self.conexion() as con:
@@ -151,6 +154,13 @@ class BaseDatos:
             pass
 
     # ---------- Actualización de bases de datos viejas ----------
+    @staticmethod
+    def _agregar_columna_imagen(con):
+        """Versión 2 → 3: agrega la columna imagen si la base es anterior a las fotos."""
+        columnas = [fila["name"] for fila in con.execute("PRAGMA table_info(productos)")]
+        if "imagen" not in columnas:
+            con.execute("ALTER TABLE productos ADD COLUMN imagen TEXT")
+
     def _es_version_1(self):
         """True si existe la tabla productos con la columna de texto 'categoria'."""
         with self.conexion() as con:
@@ -193,6 +203,7 @@ class BaseDatos:
                     precio        REAL    NOT NULL CHECK (precio >= 0),
                     existencias   INTEGER NOT NULL CHECK (existencias >= 0),
                     activo        INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
+                    imagen        TEXT,
                     FOREIGN KEY (categoria_id, tipo) REFERENCES categorias (id, tipo)
                 );
                 CREATE TABLE almuerzos (

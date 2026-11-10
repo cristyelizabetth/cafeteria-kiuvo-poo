@@ -164,15 +164,22 @@ class ServicioPedidos:
 class ServicioInventario:
     """Lo que hace el administrador con los productos (CRUD completo)."""
 
-    def __init__(self, producto_dao):
+    def __init__(self, producto_dao, gestor_imagenes):
         self._productos = producto_dao
+        self._imagenes = gestor_imagenes
 
     # C
-    def crear(self, tipo, formulario):
+    def crear(self, tipo, formulario, archivo_imagen=None):
         datos = self._leer_formulario(formulario)
         producto = Producto.construir(tipo, **datos)     # las propiedades validan
         self._revisar_duplicado(producto)
-        return self._guardar(self._productos.insertar, producto)
+        # La foto se guarda al final, cuando ya se sabe que los datos son válidos
+        producto.imagen = self._imagenes.guardar(archivo_imagen)
+        try:
+            return self._guardar(self._productos.insertar, producto)
+        except Exception:
+            self._imagenes.eliminar(producto.imagen)    # no dejar archivos huérfanos
+            raise
 
     # R
     def obtener(self, producto_id):
@@ -182,8 +189,9 @@ class ServicioInventario:
         return producto
 
     # U
-    def actualizar(self, producto_id, formulario):
+    def actualizar(self, producto_id, formulario, archivo_imagen=None):
         producto = self.obtener(producto_id)
+        imagen_anterior = producto.imagen
         datos = self._leer_formulario(formulario)
         producto.nombre = datos["nombre"]
         producto.descripcion = datos["descripcion"]
@@ -195,7 +203,20 @@ class ServicioInventario:
         else:
             producto.presentacion = datos["presentacion"]
         self._revisar_duplicado(producto)
-        return self._guardar(self._productos.actualizar, producto)
+
+        imagen_nueva = self._imagenes.guardar(archivo_imagen)
+        if imagen_nueva:
+            producto.imagen = imagen_nueva
+        elif formulario.get("quitar_imagen"):
+            producto.imagen = None
+        try:
+            self._guardar(self._productos.actualizar, producto)
+        except Exception:
+            self._imagenes.eliminar(imagen_nueva)
+            raise
+        if imagen_anterior and imagen_anterior != producto.imagen:
+            self._imagenes.eliminar(imagen_anterior)    # la foto vieja ya no se usa
+        return producto
 
     def cambiar_visibilidad(self, producto_id):
         producto = self.obtener(producto_id)
@@ -216,6 +237,7 @@ class ServicioInventario:
         con un mensaje que sugiere ocultarlo."""
         producto = self.obtener(producto_id)
         self._productos.eliminar(producto.id)
+        self._imagenes.eliminar(producto.imagen)
         return producto
 
     # ---------- Ayudantes ----------

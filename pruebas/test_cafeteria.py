@@ -99,6 +99,7 @@ class BaseSitio(unittest.TestCase):
         class ConfigPruebas(Configuracion):
             TESTING = True
             BASE_DATOS = os.path.join(self.carpeta.name, "prueba.db")
+            CARPETA_IMAGENES = os.path.join(self.carpeta.name, "imagenes")
 
         self.app = crear_app(ConfigPruebas)
         self.cliente = self.app.test_client()
@@ -417,7 +418,7 @@ class PruebasBaseDatosNormalizada(BaseBD):
         con.close()
 
         self.iniciar()
-        self.assertEqual(self.consulta("PRAGMA user_version"), [(2,)])
+        self.assertEqual(self.consulta("PRAGMA user_version"), [(3,)])
         pollo, agua, jugo = (self.productos.buscar_por_id(i) for i in (1, 2, 3))
         self.assertIsInstance(pollo, Almuerzo)
         self.assertEqual((pollo.categoria, pollo.incluye), ("Plato del día", "Arroz"))
@@ -581,6 +582,108 @@ class PruebasValidaciones(BaseSitio):
             r = self.cliente.get("/admin/inventario")
         self.assertEqual(r.status_code, 503)
         self.assertIn("No se pudo acceder a la base de datos", r.get_data(as_text=True))
+
+
+# ======================================================================
+# 5. Fotos de los productos
+# ======================================================================
+PNG_MINIMO = (b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06"
+              b"\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\xcf\xc0\x00\x00\x03\x01"
+              b"\x01\x00\xc9\xfe\x92\xef\x00\x00\x00\x00IEND\xaeB`\x82")
+JPG_FALSO = b"\xff\xd8\xff\xe0" + b"0" * 100
+
+
+class PruebasImagenes(BaseSitio):
+
+    def datos_producto(self, **extra):
+        datos = {"nombre": "Horchata", "descripcion": "", "categoria": "Bebidas",
+                 "precio": "1.10", "existencias": "10", "presentacion": "Vaso"}
+        datos.update(extra)
+        return datos
+
+    def subir(self, url, datos, contenido, nombre_archivo="foto.png"):
+        import io
+        datos = dict(datos)
+        datos["csrf_token"] = self.token("/admin/")
+        datos["imagen"] = (io.BytesIO(contenido), nombre_archivo)
+        return self.cliente.post(url, data=datos, content_type="multipart/form-data",
+                                 follow_redirects=True)
+
+    def carpeta_fotos(self):
+        return self.c.imagenes.carpeta
+
+    def test_sin_foto_usa_ilustracion_de_la_categoria(self):
+        self.entrar_estudiante()
+        html = self.cliente.get("/tienda").get_data(as_text=True)
+        self.assertIn("/static/img/categorias/bebidas.svg", html)
+        html = self.cliente.get("/almuerzos").get_data(as_text=True)
+        self.assertIn("/static/img/categorias/plato-del-dia.svg", html)
+        r = self.cliente.get("/static/img/categorias/plato-del-dia.svg")
+        self.assertEqual(r.status_code, 200)
+        r.close()
+
+    def test_admin_sube_foto_y_se_muestra(self):
+        self.entrar_admin()
+        r = self.subir("/admin/productos/nuevo/tienda", self.datos_producto(), PNG_MINIMO)
+        self.assertIn("se agregó", r.get_data(as_text=True))
+        p = self.producto("Horchata")
+        self.assertTrue(p.tiene_imagen())
+        self.assertTrue(p.imagen.endswith(".png"))
+        self.assertTrue((self.carpeta_fotos() / p.imagen).is_file())
+        r = self.cliente.get(f"/imagenes/{p.imagen}")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data, PNG_MINIMO)
+        r.close()
+        self.assertIn(f"/imagenes/{p.imagen}", self.cliente.get("/admin/inventario").get_data(as_text=True))
+
+    def test_rechaza_archivos_que_no_son_imagen(self):
+        self.entrar_admin()
+        r = self.subir("/admin/productos/nuevo/tienda", self.datos_producto(), b"MZ ejecutable", "virus.jpg")
+        self.assertIn("no es una imagen JPG, PNG o WEBP", r.get_data(as_text=True))
+        self.assertEqual(list(self.carpeta_fotos().iterdir()), [])
+        self.assertFalse(any(p.nombre == "Horchata" for p in self.c.productos.listar()))
+
+    def test_rechaza_imagen_de_mas_de_2_mb(self):
+        self.entrar_admin()
+        grande = b"\x89PNG\r\n\x1a\n" + b"0" * (2 * 1024 * 1024 + 10)
+        r = self.subir("/admin/productos/nuevo/tienda", self.datos_producto(), grande)
+        self.assertIn("pesa más de 2 MB", r.get_data(as_text=True))
+
+    def test_datos_invalidos_no_dejan_archivos_sueltos(self):
+        self.entrar_admin()
+        self.subir("/admin/productos/nuevo/tienda", self.datos_producto(precio="-3"), PNG_MINIMO)
+        self.assertEqual(list(self.carpeta_fotos().iterdir()), [])
+
+    def test_cambiar_y_quitar_foto_borra_la_anterior(self):
+        self.entrar_admin()
+        self.subir("/admin/productos/nuevo/tienda", self.datos_producto(), PNG_MINIMO)
+        p = self.producto("Horchata")
+        primera = p.imagen
+        self.subir(f"/admin/productos/{p.id}/editar", self.datos_producto(), JPG_FALSO, "nueva.jpg")
+        p = self.producto("Horchata")
+        self.assertTrue(p.imagen.endswith(".jpg"))
+        self.assertFalse((self.carpeta_fotos() / primera).exists())
+        segunda = p.imagen
+        r = self.post(f"/admin/productos/{p.id}/editar", self.datos_producto(quitar_imagen="1"),
+                      pagina="/admin/", follow_redirects=True)
+        self.assertIn("Cambios guardados", r.get_data(as_text=True))
+        self.assertFalse(self.producto("Horchata").tiene_imagen())
+        self.assertFalse((self.carpeta_fotos() / segunda).exists())
+
+    def test_eliminar_producto_borra_su_foto(self):
+        self.entrar_admin()
+        self.subir("/admin/productos/nuevo/tienda", self.datos_producto(), PNG_MINIMO)
+        p = self.producto("Horchata")
+        self.post(f"/admin/productos/{p.id}/eliminar", pagina="/admin/")
+        self.assertEqual(list(self.carpeta_fotos().iterdir()), [])
+
+    def test_no_sirve_archivos_fuera_de_la_carpeta(self):
+        for nombre in ("../config.py", "..%2Fconfig.py", "kiuvo.db", "a" * 32 + ".png"):
+            self.assertEqual(self.cliente.get(f"/imagenes/{nombre}").status_code, 404, nombre)
+
+    def test_modelo_rechaza_nombres_de_imagen_peligrosos(self):
+        with self.assertRaises(DatosInvalidos):
+            ProductoTienda("Agua", "", "Bebidas", 1, 1, imagen="../../app.py")
 
 
 if __name__ == "__main__":
