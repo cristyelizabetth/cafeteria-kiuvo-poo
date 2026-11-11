@@ -1,6 +1,8 @@
-"""Pruebas automáticas.  Ejecutar desde la carpeta del proyecto con:
+"""Pruebas del sitio completo (modelos, páginas, base de datos, DAO, fotos).
 
-    python -m unittest discover pruebas -v
+Ejecutar TODAS las pruebas desde la carpeta del proyecto con un solo comando:
+
+    python -m unittest -v
 """
 
 import os
@@ -91,14 +93,14 @@ class PruebasModelos(unittest.TestCase):
 # 2. Pruebas del sitio completo (con un navegador simulado)
 # ======================================================================
 class BaseSitio(unittest.TestCase):
-    """Prepara un sitio con base de datos temporal (sin pruebas propias)."""
+    """Prepara un sitio con base de datos en memoria (sin pruebas propias)."""
 
     def setUp(self):
         self.carpeta = tempfile.TemporaryDirectory()
 
         class ConfigPruebas(Configuracion):
             TESTING = True
-            BASE_DATOS = os.path.join(self.carpeta.name, "prueba.db")
+            BASE_DATOS = ":memory:"          # base en memoria: vacía y rápida en cada prueba
             CARPETA_IMAGENES = os.path.join(self.carpeta.name, "imagenes")
 
         self.app = crear_app(ConfigPruebas)
@@ -106,6 +108,7 @@ class BaseSitio(unittest.TestCase):
         self.c = self.app.extensions["kiuvo"]
 
     def tearDown(self):
+        self.c.base_datos.cerrar()
         self.carpeta.cleanup()
 
     # ---------- ayudantes ----------
@@ -334,13 +337,15 @@ INSERT INTO detalle_pedido VALUES (2, 1, 2, 'Agua', 0.75, 1);
 
 
 class BaseBD(unittest.TestCase):
-    """Prepara una base de datos temporal (sin pruebas propias)."""
+    """Prepara una base de datos en memoria (sin pruebas propias)."""
 
     def setUp(self):
         self.carpeta = tempfile.TemporaryDirectory()
-        self.ruta = os.path.join(self.carpeta.name, "prueba.db")
+        self.ruta = ":memory:"           # cada prueba empieza con una base nueva en memoria
 
     def tearDown(self):
+        if hasattr(self, "bd"):
+            self.bd.cerrar()
         self.carpeta.cleanup()
 
     def iniciar(self):
@@ -413,6 +418,7 @@ class PruebasBaseDatosNormalizada(BaseBD):
 
     def test_migra_una_base_de_la_version_1(self):
         import sqlite3
+        self.ruta = os.path.join(self.carpeta.name, "vieja.db")   # aquí sí hace falta un archivo
         con = sqlite3.connect(self.ruta)
         con.executescript(ESQUEMA_VERSION_1)
         con.close()

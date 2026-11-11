@@ -23,10 +23,19 @@ class ItemPedido:
     """
 
     def __init__(self, producto_id, nombre_producto, precio_unitario, cantidad):
+        try:
+            precio_unitario = round(float(precio_unitario), 2)
+            cantidad_entera = int(cantidad)
+        except (TypeError, ValueError):
+            raise DatosInvalidos("El precio y la cantidad deben ser números.") from None
+        if cantidad_entera != cantidad or cantidad_entera <= 0:
+            raise DatosInvalidos("La cantidad debe ser un número entero mayor que 0.")
+        if precio_unitario < 0:
+            raise DatosInvalidos("El precio no puede ser negativo.")
         self.producto_id = producto_id
         self.nombre_producto = nombre_producto
-        self.precio_unitario = round(float(precio_unitario), 2)
-        self.cantidad = int(cantidad)
+        self.precio_unitario = precio_unitario
+        self.cantidad = cantidad_entera
 
     @property
     def subtotal(self):

@@ -87,3 +87,23 @@ El profesor sugirió ponerle imágenes a los productos para que el sitio sea má
 | `static/css/estilos.css` | Estilos de fotos y miniaturas |
 | `pruebas/test_cafeteria.py` | 54 pruebas (9 nuevas de imágenes) |
 | `docs/` | Diagramas UML y documentos actualizados |
+
+## Ajustes para el checkpoint de la semana 14 (base de datos, pruebas y seguridad)
+
+Guía completa para la presentación: `docs/CHECKPOINT_SEMANA14.md`.
+
+| Archivo | Cambio |
+|---|---|
+| `pruebas/` → `tests/` | La carpeta se llama como pide la rúbrica y corre con un solo comando: `python -m unittest` |
+| `tests/test_dao.py` (nuevo) | CRUD de cada DAO, casos borde (id inexistente, datos inválidos, llave foránea inválida), persistencia y transacciones |
+| `tests/test_reglas_negocio.py` (nuevo) | 6 reglas de negocio probadas en la capa de servicios |
+| `tests/test_seguridad.py` (nuevo) | Inyección SQL, validación de entrada, hashes y errores sin *traceback* |
+| `tests/test_cafeteria.py` | Usa base `:memory:` |
+| `base_datos.py` | Soporta `:memory:` (una sola conexión que se reutiliza) y método `cerrar()` |
+| `dao/base.py`, `dao/*_dao.py`, `modelos/excepciones.py` | `ReferenciaInvalida` cuando se guarda algo que apunta a un registro que no existe |
+| `modelos/pedido.py`, `modelos/producto.py` | `ItemPedido` rechaza cantidades ≤ 0 y precios negativos; existencias `2.5` ya no se redondean |
+| `templates/admin/producto_form.html` | Precio y existencias como texto: la validación la hace el servidor, no el navegador |
+| `datos_iniciales.py` | `KIUVO_ADMIN_RESPUESTA` para cambiar la respuesta secreta del admin al publicar |
+| `SEGURIDAD.md` (nuevo) | Qué atacamos y qué pasó |
+| `docs/esquema.sql` (nuevo) | Esquema de la base de datos |
+| `docs/` | Diagramas UML con las excepciones nuevas |

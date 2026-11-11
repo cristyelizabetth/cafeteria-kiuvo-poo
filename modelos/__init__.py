@@ -7,7 +7,8 @@ from modelos.excepciones import (ContrasenaInvalida, CorreoYaRegistrado,
                                  DatosInvalidos, ErrorBaseDatos, ErrorCafeteria, ImagenInvalida,
                                  InventarioInsuficiente, PedidoNoCancelable,
                                  ProductoNoDisponible, RegistroDuplicado,
-                                 RegistroEnUso, RegistroNoEncontrado)
+                                 RegistroEnUso, RegistroNoEncontrado,
+                                 ReferenciaInvalida)
 from modelos.pago import MetodoPago, PagoEnCaja, PagoTarjetaSimulado
 from modelos.pedido import EstadoPedido, ItemPedido, Pedido
 from modelos.producto import Almuerzo, Producto, ProductoTienda

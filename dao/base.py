@@ -11,8 +11,8 @@ import sqlite3
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 
-from modelos.excepciones import (ErrorBaseDatos, ErrorCafeteria, RegistroDuplicado,
-                                 RegistroEnUso, RegistroNoEncontrado)
+from modelos.excepciones import (ErrorBaseDatos, ErrorCafeteria, ReferenciaInvalida,
+                                 RegistroDuplicado, RegistroEnUso, RegistroNoEncontrado)
 
 
 class DAO(ABC):
@@ -35,6 +35,7 @@ class DAO(ABC):
     MENSAJE_DUPLICADO = "Ya existe un registro con esos datos."
     MENSAJE_EN_USO = "No se puede eliminar porque otros datos dependen de este registro."
     MENSAJE_NO_ENCONTRADO = "El registro que buscas no existe."
+    MENSAJE_REFERENCIA = "Los datos hacen referencia a un registro que no existe."
 
     def __init__(self, base_datos):
         self._bd = base_datos
@@ -72,7 +73,7 @@ class DAO(ABC):
         return self.actualizar(entidad)
 
     @contextmanager
-    def _conexion(self):
+    def _conexion(self, borrando=False):
         """Abre una transacción y traduce los errores de SQLite.
 
         Uso dentro de un DAO:
@@ -93,7 +94,10 @@ class DAO(ABC):
             if "UNIQUE" in mensaje:
                 raise RegistroDuplicado(self.MENSAJE_DUPLICADO) from error
             if "FOREIGN KEY" in mensaje:
-                raise RegistroEnUso(self.MENSAJE_EN_USO) from error
+                # Al borrar: otro registro depende de este. Al guardar: apunta a algo que no existe.
+                if borrando:
+                    raise RegistroEnUso(self.MENSAJE_EN_USO) from error
+                raise ReferenciaInvalida(self.MENSAJE_REFERENCIA) from error
             raise ErrorBaseDatos("Los datos no cumplen las reglas de la base de datos.") from error
         except sqlite3.Error as error:
             raise ErrorBaseDatos(

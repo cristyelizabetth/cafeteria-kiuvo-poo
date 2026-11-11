@@ -129,7 +129,7 @@ class ProductoDAO(DAO):
         """Borra el producto. Su fila de almuerzos/productos_tienda se borra sola
         (ON DELETE CASCADE). Si ya aparece en algún pedido, la llave foránea de
         detalle_pedido lo impide y se lanza RegistroEnUso."""
-        with self._conexion() as con:
+        with self._conexion(borrando=True) as con:
             cursor = con.execute("DELETE FROM productos WHERE id = ?", (id,))
             self._confirmar_afectadas(cursor)
 

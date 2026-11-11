@@ -96,7 +96,7 @@ La plantilla `_tarjeta_producto.html` es la misma para los dos y solo llama `p.t
 ### Excepciones propias
 **Archivo:** `modelos/excepciones.py`
 
-Todas heredan de `ErrorCafeteria`: `ErrorBaseDatos` (con sus hijas `RegistroDuplicado`, `RegistroEnUso` y `RegistroNoEncontrado`, que lanza la capa DAO), `DatosInvalidos`, `InventarioInsuficiente`, `ProductoNoDisponible`, `PedidoNoCancelable`, `CredencialesInvalidas`, `CuentaBloqueada`, `ContrasenaInvalida` y `CorreoYaRegistrado`. Las rutas solo atrapan `except ErrorCafeteria` y muestran el mensaje, sin importar cuál fue.
+Todas heredan de `ErrorCafeteria`: `ErrorBaseDatos` (con sus hijas `RegistroDuplicado`, `RegistroEnUso`, `RegistroNoEncontrado` y `ReferenciaInvalida`, que lanza la capa DAO), `DatosInvalidos`, `InventarioInsuficiente`, `ImagenInvalida`, `ProductoNoDisponible`, `PedidoNoCancelable`, `CredencialesInvalidas`, `CuentaBloqueada`, `ContrasenaInvalida` y `CorreoYaRegistrado`. Las rutas solo atrapan `except ErrorCafeteria` y muestran el mensaje, sin importar cuál fue.
 
 ---
 
@@ -130,6 +130,7 @@ Además, la clase `DAO` trae métodos que heredan todos:
 - `_conexion()`: abre una **transacción** (todo o nada) y **convierte los errores de SQLite** en excepciones propias con mensajes claros:
   - un dato repetido (`UNIQUE`) → `RegistroDuplicado` ("Ya existe un producto con ese nombre.");
   - borrar algo que otros usan (`FOREIGN KEY`) → `RegistroEnUso` ("Este producto ya aparece en pedidos… Puedes ocultarlo.");
+  - guardar algo que apunta a un registro que no existe (`FOREIGN KEY`) → `ReferenciaInvalida`;
   - cualquier otro fallo → `ErrorBaseDatos` ("No se pudo acceder a la base de datos.").
 - `_confirmar_afectadas()`: avisa con `RegistroNoEncontrado` si un `UPDATE` o `DELETE` no encontró la fila.
 

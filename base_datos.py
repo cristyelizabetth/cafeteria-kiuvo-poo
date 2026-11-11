@@ -99,16 +99,35 @@ class BaseDatos:
 
     def __init__(self, ruta):
         self._ruta = str(ruta)
+        # Una base ":memory:" vive solo mientras su conexión esté abierta.
+        # Por eso, en ese caso, se abre UNA conexión y se reutiliza siempre
+        # (se usa en las pruebas: cada prueba empieza con una base vacía y rápida).
+        self._conexion_memoria = self._nueva_conexion() if self.en_memoria else None
 
     @property
     def ruta(self):
         return self._ruta
 
-    def _conectar(self):
-        conexion = sqlite3.connect(self._ruta)
+    @property
+    def en_memoria(self):
+        return self._ruta == ":memory:"
+
+    def _nueva_conexion(self):
+        conexion = sqlite3.connect(self._ruta, check_same_thread=not self.en_memoria)
         conexion.row_factory = sqlite3.Row          # filas accesibles por nombre: fila["nombre"]
         conexion.execute("PRAGMA foreign_keys = ON")  # SQLite no revisa las llaves foráneas si no se activa
         return conexion
+
+    def cerrar(self):
+        """Cierra la conexión de una base en memoria (sus datos desaparecen)."""
+        if self._conexion_memoria is not None:
+            self._conexion_memoria.close()
+            self._conexion_memoria = None
+
+    def _conectar(self):
+        if self._conexion_memoria is not None:
+            return self._conexion_memoria
+        return self._nueva_conexion()
 
     @contextmanager
     def conexion(self):
@@ -129,7 +148,8 @@ class BaseDatos:
             conexion.rollback()
             raise
         finally:
-            conexion.close()
+            if conexion is not self._conexion_memoria:
+                conexion.close()
 
     def inicializar(self):
         """Crea la carpeta y las tablas si todavía no existen.
@@ -137,7 +157,7 @@ class BaseDatos:
         Si encuentra una base de datos de la versión anterior, la actualiza
         sin perder los productos ni los pedidos.
         """
-        if self._ruta != ":memory:":
+        if not self.en_memoria:
             Path(self._ruta).parent.mkdir(parents=True, exist_ok=True)
         if self._es_version_1():
             self._migrar_desde_version_1()

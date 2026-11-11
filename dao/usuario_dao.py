@@ -81,6 +81,6 @@ class UsuarioDAO(DAO):
 
     # ---------- D ----------
     def eliminar(self, id):
-        with self._conexion() as con:
+        with self._conexion(borrando=True) as con:
             cursor = con.execute("DELETE FROM usuarios WHERE id = ?", (id,))
             self._confirmar_afectadas(cursor)

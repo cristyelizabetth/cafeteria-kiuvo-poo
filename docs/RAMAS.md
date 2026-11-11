@@ -9,7 +9,7 @@ Una forma de subir esta versión al repositorio para que **cada una tenga commit
 | 1 | `poo-modelos` | `modelos/` (todas las clases del dominio) |
 | 2 | `poo-base-datos` | `base_datos.py`, carpeta `dao/`, `datos_iniciales.py`, `docs/BASE_DE_DATOS.md`, `docs/CAMBIOS_NORMALIZACION.md`, `docs/diagrama_base_datos.*` |
 | 3 | `poo-seguridad` | `seguridad.py`, `servicios.py`, `config.py`, `.gitignore`, `requirements.txt` |
-| 4 | `poo-rutas` | `app.py`, `contenedor.py`, `sesion.py`, `rutas/`, `pruebas/` |
+| 4 | `poo-rutas` | `app.py`, `contenedor.py`, `sesion.py`, `rutas/`, `tests/` |
 | 5 | `poo-diseno` | `templates/`, `static/`, `README.md`, `docs/CLASES.md`, `docs/diagrama_clases*`, `docs/RAMAS.md`, `docs/CAMBIOS_RUBRICA.md`, `docs/GUIA_DEFENSA.md` |
 
 Cada una necesita saber explicar lo que subió: los archivos de `docs/` ayudan.
@@ -50,7 +50,7 @@ Después de unir todo, en `main`:
 ```bash
 git pull
 pip install -r requirements.txt
-python -m unittest discover pruebas
+python -m unittest
 python app.py
 ```
 
