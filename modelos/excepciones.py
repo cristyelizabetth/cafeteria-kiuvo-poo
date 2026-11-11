@@ -77,5 +77,9 @@ class RegistroEnUso(ErrorBaseDatos):
     """No se puede borrar porque otro registro depende de él (llave foránea)."""
 
 
+class ReferenciaInvalida(ErrorBaseDatos):
+    """Se intentó guardar algo que apunta a un registro que no existe (llave foránea)."""
+
+
 class RegistroNoEncontrado(ErrorBaseDatos):
     """Se intentó actualizar o eliminar algo que no existe."""

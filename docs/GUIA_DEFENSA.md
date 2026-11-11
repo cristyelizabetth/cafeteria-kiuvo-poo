@@ -96,7 +96,7 @@ Para cada parte: qué archivos son tuyos, qué tienes que poder explicar, pregun
        errores.append("Debe incluir al menos una mayúscula.")
    ```
 
-### Persona 4: Rutas y aplicación (`app.py`, `contenedor.py`, `sesion.py`, `rutas/`, `pruebas/`)
+### Persona 4: Rutas y aplicación (`app.py`, `contenedor.py`, `sesion.py`, `rutas/`, `tests/`)
 
 **Explicar:** cómo `app.py` crea los DAO y servicios y los une; los Blueprints (`auth`, `estudiante`, `admin`); los decoradores de permisos; el carrito en la sesión; las páginas de error; las pruebas automáticas.
 
@@ -104,12 +104,12 @@ Para cada parte: qué archivos son tuyos, qué tienes que poder explicar, pregun
 - *¿Cómo impiden que el admin compre?* → El decorador `solo_compradores` (en `sesion.py`) pregunta `usuario.puede_comprar()`. El admin responde `False` (polimorfismo) y recibe un 403.
 - *¿Por qué las rutas no tienen SQL?* → Solo reciben la petición, llaman a un servicio y muestran una plantilla. La lógica está en los servicios y los datos en los DAO.
 - *¿Qué pasa si la base de datos falla?* → El DAO lanza `ErrorBaseDatos` y `app.py` tiene un `errorhandler` que muestra "Base de datos no disponible" en vez de un error técnico.
-- *¿Cómo prueban que todo funciona?* → `py -m unittest discover pruebas`: 54 pruebas que simulan un navegador.
+- *¿Cómo prueban que todo funciona?* → `py -m unittest`: 86 pruebas en la carpeta `tests/`, todas con base `:memory:`.
 
 **Cambios en vivo para practicar:**
 1. *"Que la sesión dure 1 hora."* → `config.py`: `PERMANENT_SESSION_LIFETIME = timedelta(hours=1)`.
 2. *"Muestra en el panel cuántos pedidos cancelados hay."* → En `rutas/admin.py`, función `panel()`, agregar al diccionario `"cancelados": c.pedidos.contar("cancelado")`, y en `templates/admin/panel.html` copiar un `indicador` con `{{ resumen.cancelados }}`.
-3. *"Ejecuta las pruebas."* → `py -m unittest discover pruebas -v`.
+3. *"Ejecuta las pruebas."* → `py -m unittest -v`.
 
 ### Persona 5: Diseño, plantillas y documentación (`templates/`, `static/`, `docs/`)
 

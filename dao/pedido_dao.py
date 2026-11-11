@@ -8,6 +8,7 @@ from modelos.pedido import EstadoPedido, ItemPedido, Pedido
 class PedidoDAO(DAO):
     MENSAJE_EN_USO = "No se puede eliminar el pedido."
     MENSAJE_NO_ENCONTRADO = "No encontramos ese pedido."
+    MENSAJE_REFERENCIA = "El pedido hace referencia a un estudiante o producto que no existe."
 
     _SELECT = """SELECT p.*, u.nombre AS nombre_cliente
                  FROM pedidos p JOIN usuarios u ON u.id = p.usuario_id"""
@@ -129,6 +130,6 @@ class PedidoDAO(DAO):
     # ---------- D ----------
     def eliminar(self, id):
         """Borra el pedido; sus líneas se borran solas (ON DELETE CASCADE)."""
-        with self._conexion() as con:
+        with self._conexion(borrando=True) as con:
             cursor = con.execute("DELETE FROM pedidos WHERE id = ?", (id,))
             self._confirmar_afectadas(cursor)

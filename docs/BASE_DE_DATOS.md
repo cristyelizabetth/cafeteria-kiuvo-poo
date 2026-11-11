@@ -98,6 +98,7 @@ Ruta (rutas/*.py)  →  Servicio (servicios.py)  →  DAO (carpeta dao/)  →  B
 ```
 
 1. **`BaseDatos`** abre la conexión y crea las tablas con `CREATE TABLE IF NOT EXISTS`. Por eso la primera vez la base se crea sola y las siguientes no se toca. Si encuentra una base de la versión anterior (sin normalizar), la **actualiza sola** sin perder productos ni pedidos (método `_migrar_desde_version_1`).
+   El esquema completo, listo para leer, está en `docs/esquema.sql`. En cada conexión se ejecuta `PRAGMA foreign_keys = ON`, porque SQLite no revisa las llaves foráneas si no se le pide. Si la ruta es `":memory:"` (lo que usan las pruebas), la base vive en la memoria RAM: se crea vacía, es muy rápida y desaparece al cerrarla.
 2. Los **DAO** son los únicos que escriben SQL. Todos implementan la interfaz `DAO` (`insertar`, `buscar_por_id`, `listar`, `actualizar`, `eliminar`) y convierten filas en objetos y objetos en filas:
 
 ```python

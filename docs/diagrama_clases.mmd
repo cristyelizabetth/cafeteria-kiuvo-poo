@@ -294,10 +294,18 @@ classDiagram
     class RegistroEnUso {
         <<exception>>
     }
+    class RegistroNoEncontrado {
+        <<exception>>
+    }
+    class ReferenciaInvalida {
+        <<exception>>
+    }
     ErrorCafeteria <|-- DatosInvalidos
     ErrorCafeteria <|-- InventarioInsuficiente
     ErrorCafeteria <|-- ImagenInvalida
     ErrorCafeteria <|-- ErrorBaseDatos
     ErrorBaseDatos <|-- RegistroDuplicado
     ErrorBaseDatos <|-- RegistroEnUso
+    ErrorBaseDatos <|-- RegistroNoEncontrado
+    ErrorBaseDatos <|-- ReferenciaInvalida
     DAO ..> ErrorBaseDatos : lanza

@@ -38,11 +38,22 @@ Respuesta de seguridad de ambas cuentas (para probar "¿Olvidaste tu contraseña
 
 ### Pruebas automáticas
 
+Desde la carpeta del proyecto, **un solo comando** corre todas:
+
 ```bash
-python -m unittest discover pruebas -v
+python -m unittest -v
 ```
 
-Son 54 pruebas que revisan las clases, las fotos de los productos, la capa DAO (CRUD y errores), la base de datos normalizada, las validaciones, la seguridad y todos los flujos (registro, login, recuperar contraseña, comprar, cancelar, funciones del administrador).
+Son 86 pruebas, todas con una base de datos en memoria (`:memory:`), repartidas en la carpeta `tests/`:
+
+| Archivo | Qué revisa |
+|---|---|
+| `tests/test_dao.py` | CRUD completo de los 4 DAO, casos borde (id inexistente, datos inválidos, llave foránea inválida), persistencia y transacciones |
+| `tests/test_reglas_negocio.py` | Reglas del negocio: comprar descuenta inventario, no se vende más de lo que hay, cancelar devuelve, el admin no compra… |
+| `tests/test_seguridad.py` | Inyección SQL (`' OR '1'='1`), validación de entrada, contraseñas con hash y que nunca se vea un *traceback* |
+| `tests/test_cafeteria.py` | Clases, páginas y flujos completos del sitio, base normalizada y fotos |
+
+Los ataques de seguridad y sus resultados están resumidos en `SEGURIDAD.md`.
 
 ---
 
@@ -106,6 +117,7 @@ Son 54 pruebas que revisan las clases, las fotos de los productos, la capa DAO (
 | `KIUVO_DEBUG=1` | Encender el modo debug mientras desarrollan. |
 | `KIUVO_COOKIE_SEGURA=1` | Enviar la cookie solo por HTTPS (activar si lo publican en internet). |
 | `KIUVO_ADMIN_PASSWORD` | Contraseña del admin que se crea la primera vez. |
+| `KIUVO_ADMIN_RESPUESTA` | Respuesta de seguridad del admin que se crea la primera vez (cámbienla al publicar el sitio). |
 | `KIUVO_BASE_DATOS` | Ruta de otro archivo de base de datos. |
 | `KIUVO_IMAGENES` | Carpeta donde se guardan las fotos (por defecto `instancia/imagenes/`). |
 
@@ -144,7 +156,8 @@ cafeteria-kiuvo/
 │   └── admin.py            ← panel, inventario, productos, pedidos
 ├── templates/              ← HTML (Jinja)
 ├── static/css/estilos.css  ← estilos responsive
-├── pruebas/                ← pruebas automáticas
+├── tests/                  ← pruebas automáticas (python -m unittest)
+├── SEGURIDAD.md            ← qué atacamos y qué pasó
 └── docs/                   ← diagramas y explicaciones
 ```
 

@@ -10,6 +10,8 @@
 
 <section class="tarjeta-form tarjeta-form--ancha">
   <h1>{% if editando %}Editar «{{ producto.nombre }}»{% else %}Nuevo {{ clase.NOMBRE_TIPO|lower }}{% endif %}</h1>
+  {# novalidate y campos de texto: TODA la validación la hace el servidor (modelo Producto),
+     así no depende del navegador y se puede demostrar con datos inválidos. #}
   <form method="post" class="formulario" enctype="multipart/form-data" novalidate>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Nombre
@@ -28,10 +30,10 @@
     </label>
     <div class="formulario__fila">
       <label>Precio (US$)
-        <input type="number" name="precio" step="0.01" min="0" required value="{{ valor('precio', '%.2f'|format(producto.precio) if editando else none) }}">
+        <input type="text" inputmode="decimal" name="precio" placeholder="3.50" required value="{{ valor('precio', '%.2f'|format(producto.precio) if editando else none) }}">
       </label>
       <label>Existencias
-        <input type="number" name="existencias" step="1" min="0" required value="{{ valor('existencias', producto.existencias if editando else none) }}">
+        <input type="text" inputmode="numeric" name="existencias" placeholder="10" required value="{{ valor('existencias', producto.existencias if editando else none) }}">
       </label>
     </div>
     {% if clase.TIPO == 'almuerzo' %}

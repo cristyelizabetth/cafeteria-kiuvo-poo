@@ -42,7 +42,7 @@ def cargar_datos_iniciales(usuario_dao, categoria_dao, producto_dao):
             correo="admin@kiuvo.com",
             contrasena=os.environ.get("KIUVO_ADMIN_PASSWORD", "Kiuvo2026"),
             pregunta="¿Cuál es tu comida favorita?",
-            respuesta="pupusas",
+            respuesta=os.environ.get("KIUVO_ADMIN_RESPUESTA", "pupusas"),
         ))
         usuario_dao.insertar(Estudiante.crear(
             nombre="Estudiante de Prueba",

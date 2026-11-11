@@ -143,9 +143,12 @@ class Producto(ABC):
         if valor is None or str(valor).strip() == "":
             raise DatosInvalidos("Escribe las existencias.")
         try:
-            valor = int(valor)
+            entero = int(valor)
         except (TypeError, ValueError):
-            raise DatosInvalidos("Las existencias deben ser un número entero, sin decimales.") from None
+            entero = None
+        if entero is None or (isinstance(valor, float) and valor != entero):
+            raise DatosInvalidos("Las existencias deben ser un número entero, sin decimales.")
+        valor = entero
         if valor < 0:
             raise DatosInvalidos("Las existencias no pueden ser negativas.")
         if valor > self.EXISTENCIAS_MAXIMAS:
