@@ -1,6 +1,6 @@
 """Páginas del estudiante: catálogos, carrito, pago y mis pedidos."""
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 import contenedor
 import sesion
@@ -119,8 +119,8 @@ def pagar():
         else:
             carrito.vaciar()
             sesion.guardar_carrito(carrito)
-            flash(f"Pedido #{pedido.id}: {mensaje}", "exito")
-            return redirect(url_for("estudiante.mis_pedidos"))
+            flash(mensaje, "exito")
+            return redirect(url_for("estudiante.recibo", pedido_id=pedido.id))
     return render_template("estudiante/pagar.html", carrito=carrito,
                            metodos=MetodoPago.disponibles())
 
@@ -134,6 +134,18 @@ def mis_pedidos():
                            nombres_pago=nombres_pago)
 
 
+@bp.route("/mis-pedidos/<int:pedido_id>")
+@sesion.solo_compradores
+def recibo(pedido_id):
+    """Recibo del pedido: la confirmación de que la cafetería lo recibió, con su código."""
+    try:
+        pedido = contenedor.obtener().servicio_pedidos.recibo(sesion.usuario_actual(), pedido_id)
+    except ErrorCafeteria:
+        abort(404)
+    nombres_pago = {m.CLAVE: m.nombre() for m in MetodoPago.disponibles()}
+    return render_template("estudiante/recibo.html", pedido=pedido, nombres_pago=nombres_pago)
+
+
 @bp.route("/mis-pedidos/<int:pedido_id>/cancelar", methods=["POST"])
 @sesion.solo_compradores
 def cancelar(pedido_id):
@@ -142,5 +154,5 @@ def cancelar(pedido_id):
     except ErrorCafeteria as error:
         flash(str(error), "error")
     else:
-        flash(f"Pedido #{pedido_id} cancelado. Los productos volvieron al inventario.", "exito")
+        flash("Pedido cancelado. Los productos volvieron al inventario.", "exito")
     return redirect(url_for("estudiante.mis_pedidos"))

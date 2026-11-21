@@ -27,11 +27,14 @@ classDiagram
         +buscar_id(con, nombre, tipo)$ int
     }
     class ProductoDAO {
+        +listar_existencias_bajas() list
         +existe_nombre(nombre, tipo, excluir_id) bool
         +contar() int
         -_guardar_detalle(con, producto)$
     }
     class PedidoDAO {
+        +buscar_por_codigo(codigo) Pedido
+        +reporte_mensual(anio, mes) ReporteMensual
         +cancelar(pedido)
         +contar(estado) int
     }
@@ -45,6 +48,8 @@ classDiagram
     ProductoDAO ..> Producto : crea
     ProductoDAO ..> CategoriaDAO
     PedidoDAO ..> Pedido : crea
+    PedidoDAO ..> ReporteMensual : crea
+    class ReporteMensual
 
     class BaseDatos {
         #str _ruta
@@ -52,6 +57,7 @@ classDiagram
         +conexion() transacción
         +inicializar()
         -_migrar_desde_version_1()
+        -_migrar_pedidos_a_version_4()
     }
 
     class Usuario {

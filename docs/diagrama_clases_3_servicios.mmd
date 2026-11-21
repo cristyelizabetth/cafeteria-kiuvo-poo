@@ -16,8 +16,20 @@ classDiagram
         #PedidoDAO _pedidos
         +confirmar_compra(usuario, carrito, metodo)
         +cancelar(usuario, pedido_id)
+        +recibo(usuario, pedido_id) Pedido
+        +buscar_por_codigo(texto) Pedido
+        +marcar_entregado(pedido_id)
+        +marcar_no_recogido(pedido_id)
         +pedidos_de(usuario) list
     }
+    class ServicioReportes {
+        #PedidoDAO _pedidos
+        #ProductoDAO _productos
+        +reporte(texto_mes) ReporteMensual
+        +existencias_bajas() list
+    }
+    ServicioReportes "1" o-- "1" PedidoDAO
+    ServicioReportes "1" o-- "1" ProductoDAO
     class ServicioInventario {
         #ProductoDAO _productos
         #GestorImagenes _imagenes
@@ -77,6 +89,9 @@ classDiagram
     class ImagenInvalida {
         <<exception>>
     }
+    class CambioEstadoInvalido {
+        <<exception>>
+    }
     class ErrorBaseDatos {
         <<exception>>
     }
@@ -95,6 +110,8 @@ classDiagram
     ErrorCafeteria <|-- DatosInvalidos
     ErrorCafeteria <|-- InventarioInsuficiente
     ErrorCafeteria <|-- ImagenInvalida
+    ErrorCafeteria <|-- CambioEstadoInvalido
+    Pedido ..> CambioEstadoInvalido : lanza
     ErrorCafeteria <|-- ErrorBaseDatos
     ErrorBaseDatos <|-- RegistroDuplicado
     ErrorBaseDatos <|-- RegistroEnUso
@@ -105,6 +122,7 @@ classDiagram
     class UsuarioDAO
     class ProductoDAO
     class PedidoDAO
+    class Pedido
     class MetodoPago {
         <<abstract>>
     }

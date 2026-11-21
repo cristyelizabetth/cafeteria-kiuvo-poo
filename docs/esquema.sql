@@ -1,4 +1,4 @@
--- Esquema de la base de datos de Cafetería Kiuvo (SQLite)
+-- Esquema de la base de datos de Cafetería Kiuvo (SQLite), versión 4
 -- Copia de BaseDatos.ESQUEMA (base_datos.py): ahí es donde el programa crea las tablas.
 -- Las llaves foráneas se activan en cada conexión con: PRAGMA foreign_keys = ON;
 
@@ -52,9 +52,11 @@ CREATE TABLE IF NOT EXISTS productos_tienda (
 
 CREATE TABLE IF NOT EXISTS pedidos (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo       TEXT    NOT NULL UNIQUE,        -- código del recibo, ej. KV-7F3K9Q
     usuario_id   INTEGER NOT NULL REFERENCES usuarios(id),
     fecha        TEXT    NOT NULL,
-    estado       TEXT    NOT NULL CHECK (estado IN ('pendiente', 'cancelado')),
+    estado       TEXT    NOT NULL
+                 CHECK (estado IN ('pendiente', 'entregado', 'no_recogido', 'cancelado')),
     metodo_pago  TEXT    NOT NULL,
     total        REAL    NOT NULL CHECK (total >= 0)
 );
@@ -69,8 +71,10 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pedidos_usuario    ON pedidos(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_fecha      ON pedidos(fecha);
 CREATE INDEX IF NOT EXISTS idx_detalle_pedido     ON detalle_pedido(pedido_id);
 CREATE INDEX IF NOT EXISTS idx_productos_tipo     ON productos(tipo, categoria_id);
+
 
 -- No se permiten dos productos del mismo tipo con el mismo nombre (sin importar mayúsculas)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_productos_nombre_unico

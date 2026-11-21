@@ -21,7 +21,7 @@ Usamos **SQLite**:
 | `productos` | Lo **común** a todos los productos | Un producto con su nombre, categoría, precio y existencias |
 | `almuerzos` | Lo **propio** de los almuerzos | Qué incluye un almuerzo ("Arroz, ensalada y fresco") |
 | `productos_tienda` | Lo **propio** de la tienda | La presentación de un producto ("Botella 600 ml") |
-| `pedidos` | El encabezado de cada compra | Un pedido: quién, cuándo, estado, método de pago y total |
+| `pedidos` | El encabezado de cada compra | Un pedido: su código de recibo (`KV-7F3K9Q`, único), quién, cuándo, estado (pendiente, entregado, no recogido o cancelado), método de pago y total |
 | `detalle_pedido` | Lo que lleva cada pedido | Una línea: "2 × Pollo guisado a $3.50" |
 
 ### Conceptos clave
@@ -83,6 +83,40 @@ La foto **no** se guarda dentro de la base de datos (eso la haría pesada y lent
 El nombre lo genera el programa al azar (`secrets.token_hex`), nunca se usa el nombre que traía el archivo. Así nadie puede subir algo llamado `../../app.py` para sobrescribir el código.
 
 Esta columna se agregó en la versión 3 del esquema: si una base vieja no la tiene, `BaseDatos` la agrega sola con `ALTER TABLE productos ADD COLUMN imagen TEXT` y guarda `PRAGMA user_version = 3`.
+
+### ¿Qué es el código de recibo y cómo se actualizó la base?
+
+Cada pedido tiene un `codigo` como `KV-7F3K9Q`, que el estudiante muestra en la barra. La columna es `UNIQUE`: la base no deja que dos pedidos tengan el mismo código. El código se sortea al azar (`secrets`), sin letras que se confunden al leerlas (0/O, 1/I/L).
+
+Esta es la **versión 4** del esquema. Para agregar la columna y los estados nuevos (`entregado`, `no_recogido`) había que cambiar la regla `CHECK` de `pedidos`, y SQLite no permite cambiarla. Por eso, si `BaseDatos` encuentra una base anterior (como la del sitio publicado), ejecuta `_migrar_pedidos_a_version_4`. Ese método crea la tabla nueva, copia los pedidos con los mismos `id`, le da un código a cada pedido viejo y reemplaza la tabla, todo en una transacción. No se pierde ningún pedido.
+
+### Consultas propias del negocio
+
+Además del CRUD, hay dos consultas pensadas para la cafetería:
+
+**1. Reporte mensual de ventas** (`PedidoDAO.reporte_mensual`), para los cuadros que la gerente arma a fin de mes:
+
+```sql
+SELECT d.nombre_producto, pr.tipo,
+       SUM(d.cantidad)                     AS unidades,
+       SUM(d.cantidad * d.precio_unitario) AS total
+FROM detalle_pedido d
+JOIN pedidos p         ON p.id = d.pedido_id
+LEFT JOIN productos pr ON pr.id = d.producto_id
+WHERE p.estado <> 'cancelado' AND p.fecha >= ? AND p.fecha < ?
+GROUP BY d.producto_id, d.nombre_producto
+ORDER BY total DESC
+```
+
+`GROUP BY` junta todas las líneas de un mismo producto y `SUM` suma sus unidades y su dinero. Los pedidos cancelados no cuentan. El resultado no son filas sueltas: el DAO devuelve un objeto `ReporteMensual`, que también se puede descargar para Excel.
+
+**2. Productos por agotarse** (`ProductoDAO.listar_existencias_bajas`), que alimenta "Necesitan atención" en el panel del admin. Cada clase tiene su propio límite (5 para almuerzos y 10 para la tienda), así que la consulta usa `CASE`:
+
+```sql
+WHERE p.activo = 1
+  AND p.existencias <= CASE p.tipo WHEN 'almuerzo' THEN 5 ELSE 10 END
+ORDER BY p.existencias
+```
 
 ### ¿Por qué los productos se "ocultan" en vez de borrarse?
 

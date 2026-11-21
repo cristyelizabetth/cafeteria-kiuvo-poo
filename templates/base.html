@@ -5,13 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}Cafetería Kiuvo{% endblock %} · Kiuvo</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/marca/favicon.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/marca/icono-180.png') }}">
+  <meta name="theme-color" content="#14213d">
 </head>
 <body>
   <header class="barra">
     <div class="barra__contenido">
       <a class="marca" href="{{ url_for('auth.inicio') }}">
-        <span class="marca__icono" aria-hidden="true">K</span>
-        <span>Kiuvo</span>
+        <img class="marca__logo" src="{{ url_for('static', filename='img/marca/logo-kiuvo-blanco.png') }}"
+             alt="Kiuvo" width="110" height="38">
       </a>
 
       {# Menú para celular: el checkbox abre y cierra el menú sin JavaScript #}
@@ -32,6 +35,7 @@
           <a href="{{ url_for('admin.panel') }}">Panel</a>
           <a href="{{ url_for('admin.inventario') }}">Inventario</a>
           <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
+          <a href="{{ url_for('admin.reportes') }}">Reportes</a>
         {% endif %}
 
         {% if usuario %}

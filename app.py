@@ -17,7 +17,8 @@ from modelos.excepciones import ErrorBaseDatos
 from dao import CategoriaDAO, PedidoDAO, ProductoDAO, UsuarioDAO
 from rutas import admin, auth, estudiante
 from seguridad import LimitadorIntentos, ProtectorCSRF
-from servicios import ServicioAutenticacion, ServicioInventario, ServicioPedidos
+from servicios import (ServicioAutenticacion, ServicioInventario, ServicioPedidos,
+                       ServicioReportes)
 
 
 def crear_app(configuracion=Configuracion):
@@ -48,6 +49,7 @@ def crear_app(configuracion=Configuracion):
         autenticacion=ServicioAutenticacion(usuarios, limitador_login, limitador_recuperacion),
         servicio_pedidos=ServicioPedidos(productos, pedidos),
         inventario=ServicioInventario(productos, imagenes),
+        reportes=ServicioReportes(pedidos, productos),
         imagenes=imagenes,
         csrf=csrf,
     )

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titulo %}Recibo {{ pedido.codigo }}{% endblock %}
+{% block contenido %}
+<article class="recibo">
+  <header class="recibo__cabecera">
+    {% if pedido.estado.value == 'pendiente' %}
+      <p class="recibo__aviso">✓ La cafetería ya recibió tu pedido</p>
+    {% endif %}
+    <h1>Recibo</h1>
+    <p class="nota">Muestra este código en la cafetería para retirar tu pedido.</p>
+    <p class="recibo__codigo" aria-label="Código del recibo">{{ pedido.codigo }}</p>
+    <span class="estado estado--{{ pedido.estado.value }}">{{ pedido.estado.texto }}</span>
+  </header>
+
+  <dl class="recibo__datos">
+    <div><dt>A nombre de</dt><dd>{{ pedido.nombre_cliente }}</dd></div>
+    <div><dt>Fecha</dt><dd>{{ pedido.fecha|fecha }}</dd></div>
+    <div><dt>Pago</dt><dd>{{ nombres_pago.get(pedido.metodo_pago, pedido.metodo_pago) }}</dd></div>
+  </dl>
+
+  <ul class="detalle">
+    {% for item in pedido.items %}
+      <li><span>{{ item.cantidad }} × {{ item.nombre_producto }}</span><span>{{ item.subtotal|dinero }}</span></li>
+    {% endfor %}
+    <li class="detalle__total"><span>Total</span><span>{{ pedido.total|dinero }}</span></li>
+  </ul>
+
+  <div class="acciones">
+    {% if pedido.puede_cancelarse() %}
+      <form method="post" action="{{ url_for('estudiante.cancelar', pedido_id=pedido.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="boton boton--peligro boton--chico">Cancelar pedido</button>
+      </form>
+    {% endif %}
+    <a class="boton boton--borde boton--chico" href="{{ url_for('estudiante.mis_pedidos') }}">Ver todos mis pedidos</a>
+  </div>
+</article>
+{% endblock %}

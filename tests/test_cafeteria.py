@@ -424,7 +424,11 @@ class PruebasBaseDatosNormalizada(BaseBD):
         con.close()
 
         self.iniciar()
-        self.assertEqual(self.consulta("PRAGMA user_version"), [(3,)])
+        self.assertEqual(self.consulta("PRAGMA user_version"), [(4,)])
+        # los pedidos viejos recibieron un código de recibo válido y distinto
+        codigos = [c for (c,) in self.consulta("SELECT codigo FROM pedidos")]
+        self.assertTrue(codigos and all(re.match(r"^KV-[A-Z2-9]{6}$", c) for c in codigos))
+        self.assertEqual(len(set(codigos)), len(codigos))
         pollo, agua, jugo = (self.productos.buscar_por_id(i) for i in (1, 2, 3))
         self.assertIsInstance(pollo, Almuerzo)
         self.assertEqual((pollo.categoria, pollo.incluye), ("Plato del día", "Arroz"))

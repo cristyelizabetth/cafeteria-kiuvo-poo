@@ -42,9 +42,10 @@ erDiagram
     }
     pedidos {
         INTEGER id PK
+        TEXT codigo UK "recibo, ej. KV-7F3K9Q"
         INTEGER usuario_id FK
         TEXT fecha
-        TEXT estado "pendiente o cancelado"
+        TEXT estado "pendiente, entregado, no_recogido o cancelado"
         TEXT metodo_pago
         REAL total
     }

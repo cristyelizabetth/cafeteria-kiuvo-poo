@@ -6,10 +6,12 @@ from modelos.excepciones import (ContrasenaInvalida, CorreoYaRegistrado,
                                  CredencialesInvalidas, CuentaBloqueada,
                                  DatosInvalidos, ErrorBaseDatos, ErrorCafeteria, ImagenInvalida,
                                  InventarioInsuficiente, PedidoNoCancelable,
+                                 CambioEstadoInvalido,
                                  ProductoNoDisponible, RegistroDuplicado,
                                  RegistroEnUso, RegistroNoEncontrado,
                                  ReferenciaInvalida)
 from modelos.pago import MetodoPago, PagoEnCaja, PagoTarjetaSimulado
 from modelos.pedido import EstadoPedido, ItemPedido, Pedido
+from modelos.reporte import LineaReporte, ReporteMensual
 from modelos.producto import Almuerzo, Producto, ProductoTienda
 from modelos.usuario import Administrador, Estudiante, Usuario
