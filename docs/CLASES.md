@@ -83,8 +83,17 @@ La plantilla `_tarjeta_producto.html` es la misma para los dos y solo llama `p.t
 - Un `Pedido` **contiene** uno o más `ItemPedido` (composición).
 - `Pedido.desde_carrito()` convierte el carrito en pedido.
 - `ItemPedido` guarda una **copia** del nombre y del precio del momento de la compra. Si el admin cambia el precio mañana, los pedidos viejos no cambian.
-- `EstadoPedido` es una **enumeración** (`Enum`): solo puede valer `PENDIENTE` o `CANCELADO`.
-- `cancelar()` revisa con `puede_cancelarse()` y lanza `PedidoNoCancelable` si ya estaba cancelado.
+- Cada pedido tiene un **código de recibo** (`codigo`, por ejemplo `KV-7F3K9Q`). Es una propiedad que valida el formato; `generar_codigo()` lo sortea y `normalizar_codigo()` acepta que lo escriban de varias formas (`kv-7f3k9q`, `7F3K9Q`).
+- `EstadoPedido` es una **enumeración** (`Enum`) con cuatro valores: `PENDIENTE`, `ENTREGADO`, `NO_RECOGIDO` y `CANCELADO`.
+- Solo un pedido **pendiente** puede cambiar: `cancelar()` (el estudiante; lanza `PedidoNoCancelable`), `marcar_entregado()` o `marcar_no_recogido()` (la cafetería; lanzan `CambioEstadoInvalido`). Un pedido entregado ya no se puede cancelar.
+
+### `ReporteMensual` y `LineaReporte`
+**Archivo:** `modelos/reporte.py`
+
+- Un `ReporteMensual` **contiene** varias `LineaReporte` (composición): una por producto vendido en el mes.
+- `validar_mes()` rechaza meses fuera de 1–12 o años raros con `DatosInvalidos`.
+- Propiedades calculadas: `total_vendido`, `unidades_vendidas`, `nombre` ("Noviembre 2026"), y `pedidos(estado)` para contar entregados, no recogidos, etc.
+- `a_csv()` lo convierte en un archivo que se abre en Excel.
 
 ### `MetodoPago` (abstracta) → `PagoEnCaja`, `PagoTarjetaSimulado`
 **Archivo:** `modelos/pago.py`
@@ -96,7 +105,7 @@ La plantilla `_tarjeta_producto.html` es la misma para los dos y solo llama `p.t
 ### Excepciones propias
 **Archivo:** `modelos/excepciones.py`
 
-Todas heredan de `ErrorCafeteria`: `ErrorBaseDatos` (con sus hijas `RegistroDuplicado`, `RegistroEnUso`, `RegistroNoEncontrado` y `ReferenciaInvalida`, que lanza la capa DAO), `DatosInvalidos`, `InventarioInsuficiente`, `ImagenInvalida`, `ProductoNoDisponible`, `PedidoNoCancelable`, `CredencialesInvalidas`, `CuentaBloqueada`, `ContrasenaInvalida` y `CorreoYaRegistrado`. Las rutas solo atrapan `except ErrorCafeteria` y muestran el mensaje, sin importar cuál fue.
+Todas heredan de `ErrorCafeteria`: `ErrorBaseDatos` (con sus hijas `RegistroDuplicado`, `RegistroEnUso`, `RegistroNoEncontrado` y `ReferenciaInvalida`, que lanza la capa DAO), `DatosInvalidos`, `InventarioInsuficiente`, `ImagenInvalida`, `ProductoNoDisponible`, `PedidoNoCancelable`, `CambioEstadoInvalido`, `CredencialesInvalidas`, `CuentaBloqueada`, `ContrasenaInvalida` y `CorreoYaRegistrado`. Las rutas solo atrapan `except ErrorCafeteria` y muestran el mensaje, sin importar cuál fue.
 
 ---
 
@@ -138,8 +147,8 @@ Además, la clase `DAO` trae métodos que heredan todos:
 |---|---|---|
 | `UsuarioDAO` | `usuarios` | `buscar_por_correo`, `existe_correo`, `contar` |
 | `CategoriaDAO` | `categorias` | `asegurar` (crea las categorías oficiales), `buscar_id` |
-| `ProductoDAO` | `productos`, `almuerzos`, `productos_tienda` | `existe_nombre`, `contar`, `_guardar_detalle` |
-| `PedidoDAO` | `pedidos`, `detalle_pedido` | `cancelar` (cambia el estado y devuelve el inventario), `contar` |
+| `ProductoDAO` | `productos`, `almuerzos`, `productos_tienda` | `listar_existencias_bajas` (consulta propia), `existe_nombre`, `contar`, `_guardar_detalle` |
+| `PedidoDAO` | `pedidos`, `detalle_pedido` | `buscar_por_codigo`, `reporte_mensual` (consulta propia con `GROUP BY`), `cancelar` (cambia el estado y devuelve el inventario), `contar` |
 
 `ProductoDAO` reparte cada producto en dos tablas: lo común va a `productos` y lo propio va a la tabla que indica la clase (`TABLA_DETALLE`), con los datos de `datos_extra()`. El DAO no pregunta "¿es almuerzo o tienda?": cada objeto dice dónde van sus datos (**polimorfismo**).
 
@@ -159,7 +168,8 @@ Una categoría ("Bebidas", "Vegetariano"…) con su tipo (`almuerzo` o `tienda`)
 | Clase | Archivo | Qué hace |
 |---|---|---|
 | `ServicioAutenticacion` | `servicios.py` | Registro de estudiantes, inicio de sesión con límite de intentos y recuperación de contraseña. |
-| `ServicioPedidos` | `servicios.py` | Confirmar compras (crea el pedido, descuenta inventario y procesa el pago) y cancelar pedidos. |
+| `ServicioPedidos` | `servicios.py` | Confirmar compras (crea el pedido con su código, descuenta inventario y procesa el pago), cancelar, mostrar el recibo solo a su dueño, buscar por código y marcar entregado o no recogido. |
+| `ServicioReportes` | `servicios.py` | Reporte mensual de ventas y productos por agotarse, para la gerencia. |
 | `ServicioInventario` | `servicios.py` | CRUD de productos del admin: crear, ver, editar, ocultar o mostrar, reponer y eliminar. Revisa que no se repitan nombres. Usa `GestorImagenes` para la foto (agregación). |
 | `GestorImagenes` | `imagenes.py` | Guarda las fotos que sube el admin: revisa que pesen menos de 2 MB y que de verdad sean JPG, PNG o WEBP (mira los primeros bytes, no solo la extensión), les pone un nombre al azar y borra las que ya no se usan. Lanza `ImagenInvalida`. |
 | `ValidadorContrasena` | `seguridad.py` | Reglas de contraseña. Sus métodos son de clase (`@classmethod`): se usa sin crear objetos. |
@@ -178,7 +188,7 @@ Una categoría ("Bebidas", "Vegetariano"…) con su tipo (`almuerzo` o `tienda`)
 | **Herencia** | `Estudiante` y `Administrador` heredan de `Usuario`; `Almuerzo` y `ProductoTienda` de `Producto`; las excepciones de `ErrorCafeteria`. |
 | **Polimorfismo** | `puede_comprar()`, `pagina_principal()`, `texto_boton()`, `etiqueta_existencias()`, `datos_extra()`, `procesar()`; y los cuatro DAO con los mismos métodos CRUD. |
 | **Abstracción e interfaz** | `Usuario`, `Producto` y `MetodoPago` son clases abstractas con métodos `@abstractmethod`. `DAO` es la interfaz de la capa de datos. |
-| **Composición** | `Carrito` contiene `ItemCarrito`; `Pedido` contiene `ItemPedido`. |
+| **Composición** | `Carrito` contiene `ItemCarrito`; `Pedido` contiene `ItemPedido`; `ReporteMensual` contiene `LineaReporte`. |
 | **Agregación** | Los DAO reciben un `BaseDatos`; los servicios reciben DAO. |
 | **Métodos de clase / estáticos** | `Usuario.crear()`, `Producto.construir()`, `ValidadorContrasena.validar()`. |
 | **Enumeración** | `EstadoPedido`. |

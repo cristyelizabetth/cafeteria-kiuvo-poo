@@ -6,14 +6,16 @@ servicio escribe SQL.
 """
 
 import re
+from datetime import date
 
 from modelos.excepciones import (ContrasenaInvalida, CorreoYaRegistrado,
                                  CredencialesInvalidas, CuentaBloqueada,
                                  DatosInvalidos, ErrorCafeteria, PedidoNoCancelable,
-                                 RegistroDuplicado)
+                                 RegistroDuplicado, RegistroNoEncontrado)
 from modelos.pago import MetodoPago
 from modelos.pedido import Pedido
 from modelos.producto import Producto
+from modelos.reporte import ReporteMensual
 from modelos.usuario import Estudiante, Usuario
 
 PATRON_CORREO = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -129,7 +131,9 @@ class ServicioAutenticacion:
 
 
 class ServicioPedidos:
-    """Confirmar compras y cancelar pedidos."""
+    """Confirmar compras, cancelarlas, ver recibos y marcar entregas."""
+
+    INTENTOS_CODIGO = 3   # si el código al azar ya existiera, se sortea otro
 
     def __init__(self, producto_dao, pedido_dao):
         self._productos = producto_dao
@@ -145,9 +149,49 @@ class ServicioPedidos:
             raise DatosInvalidos("Elige un método de pago.")
 
         pedido = Pedido.desde_carrito(usuario, carrito, metodo)
-        self._pedidos.insertar(pedido)           # guarda y descuenta inventario
+        for intento in range(self.INTENTOS_CODIGO):
+            try:
+                self._pedidos.insertar(pedido)   # guarda y descuenta inventario (transacción)
+                break
+            except RegistroDuplicado:
+                # Otro pedido ya tenía ese código de recibo: la transacción se deshizo
+                # completa, así que se sortea otro código y se intenta de nuevo.
+                if intento == self.INTENTOS_CODIGO - 1:
+                    raise
+                pedido.nuevo_codigo()
         mensaje = metodo.procesar(pedido.total)  # polimorfismo: cada método responde distinto
         return pedido, mensaje
+
+    def recibo(self, usuario, pedido_id):
+        """El pedido, solo si es de ese estudiante (nadie ve el recibo de otra persona)."""
+        pedido = self._pedidos.buscar_por_id(pedido_id)
+        if pedido is None or not pedido.pertenece_a(usuario):
+            raise RegistroNoEncontrado("No encontramos ese pedido.")
+        return pedido
+
+    # ---------- Lo que hace la cafetería al entregar ----------
+    def buscar_por_codigo(self, texto):
+        codigo = Pedido.normalizar_codigo(texto)        # valida el formato
+        pedido = self._pedidos.buscar_por_codigo(codigo)
+        if pedido is None:
+            raise RegistroNoEncontrado(f"No hay ningún pedido con el código {codigo}.")
+        return pedido
+
+    def marcar_entregado(self, pedido_id):
+        pedido = self._pedido_existente(pedido_id)
+        pedido.marcar_entregado()              # el modelo revisa que esté pendiente
+        return self._pedidos.actualizar(pedido)
+
+    def marcar_no_recogido(self, pedido_id):
+        pedido = self._pedido_existente(pedido_id)
+        pedido.marcar_no_recogido()
+        return self._pedidos.actualizar(pedido)
+
+    def _pedido_existente(self, pedido_id):
+        pedido = self._pedidos.buscar_por_id(pedido_id)
+        if pedido is None:
+            raise RegistroNoEncontrado("No encontramos ese pedido.")
+        return pedido
 
     def cancelar(self, usuario, pedido_id):
         pedido = self._pedidos.buscar_por_id(pedido_id)
@@ -159,6 +203,26 @@ class ServicioPedidos:
 
     def pedidos_de(self, usuario):
         return self._pedidos.listar(usuario_id=usuario.id)
+
+
+class ServicioReportes:
+    """Consultas para la gerencia: ventas del mes y productos por agotarse."""
+
+    def __init__(self, pedido_dao, producto_dao):
+        self._pedidos = pedido_dao
+        self._productos = producto_dao
+
+    def reporte(self, texto_mes=None):
+        """texto_mes = '2026-11'. Sin mes, se usa el mes actual."""
+        if texto_mes:
+            anio, mes = ReporteMensual.leer_mes(texto_mes)
+        else:
+            hoy = date.today()
+            anio, mes = hoy.year, hoy.month
+        return self._pedidos.reporte_mensual(anio, mes)
+
+    def existencias_bajas(self):
+        return self._productos.listar_existencias_bajas()
 
 
 class ServicioInventario:

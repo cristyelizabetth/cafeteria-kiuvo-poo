@@ -2,7 +2,7 @@
 
 from dao.base import DAO
 from dao.categoria_dao import CategoriaDAO
-from modelos.producto import Producto
+from modelos.producto import Almuerzo, Producto, ProductoTienda
 
 
 class ProductoDAO(DAO):
@@ -92,6 +92,23 @@ class ProductoDAO(DAO):
         sql += " ORDER BY p.tipo, c.id, p.nombre"
         with self._conexion() as con:
             filas = con.execute(sql, parametros).fetchall()
+        return [self._a_objeto(f) for f in filas]
+
+    def listar_existencias_bajas(self):
+        """Consulta propia: productos visibles que están agotados o por agotarse.
+
+        Cada clase tiene su propio límite (UMBRAL_EXISTENCIAS_BAJAS): los almuerzos
+        se marcan antes que los productos de tienda. Ordena de menos a más existencias.
+        """
+        with self._conexion() as con:
+            filas = con.execute(
+                self._SELECT + """
+                WHERE p.activo = 1
+                  AND p.existencias <= CASE p.tipo WHEN ? THEN ? ELSE ? END
+                ORDER BY p.existencias, p.nombre""",
+                (Almuerzo.TIPO, Almuerzo.UMBRAL_EXISTENCIAS_BAJAS,
+                 ProductoTienda.UMBRAL_EXISTENCIAS_BAJAS),
+            ).fetchall()
         return [self._a_objeto(f) for f in filas]
 
     def existe_nombre(self, nombre, tipo, excluir_id=None):

@@ -44,13 +44,14 @@ Desde la carpeta del proyecto, **un solo comando** corre todas:
 python -m unittest -v
 ```
 
-Son 86 pruebas, todas con una base de datos en memoria (`:memory:`), repartidas en la carpeta `tests/`:
+Son 111 pruebas en la carpeta `tests/`. Usan una base de datos en memoria (`:memory:`), salvo las que necesitan un archivo de verdad (cerrar y reabrir, actualizar una base vieja y la compra simultánea):
 
 | Archivo | Qué revisa |
 |---|---|
 | `tests/test_dao.py` | CRUD completo de los 4 DAO, casos borde (id inexistente, datos inválidos, llave foránea inválida), persistencia y transacciones |
-| `tests/test_reglas_negocio.py` | Reglas del negocio: comprar descuenta inventario, no se vende más de lo que hay, cancelar devuelve, el admin no compra… |
+| `tests/test_reglas_negocio.py` | Reglas del negocio: comprar descuenta inventario, no se vende más de lo que hay, cancelar devuelve, el admin no compra… y **dos personas comprando el último producto al mismo tiempo** |
 | `tests/test_seguridad.py` | Inyección SQL (`' OR '1'='1`), validación de entrada, contraseñas con hash y que nunca se vea un *traceback* |
+| `tests/test_entregas_y_reportes.py` | Código de recibo, entregado / no recogido, reporte mensual de ventas, descarga para Excel y productos por agotarse |
 | `tests/test_cafeteria.py` | Clases, páginas y flujos completos del sitio, base normalizada y fotos |
 
 Los ataques de seguridad y sus resultados están resumidos en `SEGURIDAD.md`.
@@ -65,7 +66,8 @@ Los ataques de seguridad y sus resultados están resumidos en `SEGURIDAD.md`.
 - Filtrar almuerzos y productos de tienda por categoría.
 - Agregar al carrito, cambiar cantidades y quitar productos.
 - Pagar (simulado): en caja al retirar o con tarjeta simulada.
-- Ver sus pedidos y **cancelar** los que están pendientes. Lo cancelado vuelve al inventario.
+- Recibir al instante su **recibo** con un **código** (por ejemplo `KV-7F3K9Q`) que confirma que la cafetería recibió el pedido. Lo muestra en la barra para retirar.
+- Ver sus pedidos y su estado (pendiente, entregado, no recogido o cancelado) y **cancelar** los que están pendientes. Lo cancelado vuelve al inventario.
 
 **Administrador**
 - Panel con resumen: productos, agotados, existencias bajas y pedidos pendientes.
@@ -74,7 +76,9 @@ Los ataques de seguridad y sus resultados están resumidos en `SEGURIDAD.md`.
 - Ocultar o mostrar un producto a los estudiantes.
 - Reponer existencias.
 - **Subir una foto** a cada producto (JPG, PNG o WEBP de hasta 2 MB) o quitarla. Sin foto, se muestra una ilustración de su categoría.
-- Ver los pedidos de los estudiantes.
+- Ver los pedidos de los estudiantes, **buscar uno por su código de recibo** y marcarlo como **entregado** o **no recogido**.
+- **Reporte mensual de ventas**: cuánto se vendió de cada producto y cuánto dinero entró, con descarga para Excel (los cuadros de fin de mes de la gerencia).
+- Ver qué productos están agotados o por agotarse.
 - **No puede** comprar ni reservar.
 
 ---
@@ -148,6 +152,7 @@ cafeteria-kiuvo/
 │   ├── categoria.py        ← Categoria
 │   ├── carrito.py          ← Carrito, ItemCarrito
 │   ├── pedido.py           ← Pedido, ItemPedido, EstadoPedido
+│   ├── reporte.py          ← ReporteMensual, LineaReporte
 │   ├── pago.py             ← MetodoPago → PagoEnCaja, PagoTarjetaSimulado
 │   └── excepciones.py      ← ErrorCafeteria y sus hijas
 ├── rutas/                  ← páginas, separadas por tipo de usuario
@@ -155,7 +160,8 @@ cafeteria-kiuvo/
 │   ├── estudiante.py       ← catálogos, carrito, pago, mis pedidos
 │   └── admin.py            ← panel, inventario, productos, pedidos
 ├── templates/              ← HTML (Jinja)
-├── static/css/estilos.css  ← estilos responsive
+├── static/css/estilos.css  ← estilos responsive (colores de Kiuvo: naranja, navy y negro)
+├── static/img/marca/       ← logo de Kiuvo
 ├── tests/                  ← pruebas automáticas (python -m unittest)
 ├── SEGURIDAD.md            ← qué atacamos y qué pasó
 └── docs/                   ← diagramas y explicaciones
@@ -168,5 +174,6 @@ Más detalle:
 - `docs/BASE_DE_DATOS.md`: cómo funciona la base de datos.
 - `docs/CAMBIOS_NORMALIZACION.md`: qué cambió al normalizar la base de datos.
 - `docs/CAMBIOS_RUBRICA.md`: cómo cumple cada criterio de la rúbrica final.
+- `docs/PRESENTACION_FINAL.md`: guion de 10 minutos de la presentación final, con las 6 evidencias.
 - `docs/GUIA_DEFENSA.md`: guion de la demo y preparación de la defensa individual.
 - `docs/RAMAS.md`: cómo subir el proyecto entre las cinco con ramas y Pull Requests.

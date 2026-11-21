@@ -4,6 +4,8 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
+from modelos.pedido import Pedido
+
 
 class BaseDatos:
     """Se encarga SOLO de conectarse a SQLite y crear las tablas.
@@ -16,7 +18,8 @@ class BaseDatos:
     #   1 = versión original (categoría como texto, almuerzos y tienda en una sola tabla)
     #   2 = versión normalizada (tablas categorias, almuerzos y productos_tienda)
     #   3 = productos con foto (columna imagen)
-    VERSION_ESQUEMA = 3
+    #   4 = pedidos con código de recibo y estados entregado / no recogido
+    VERSION_ESQUEMA = 4
 
     ESQUEMA = """
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -69,9 +72,11 @@ class BaseDatos:
 
     CREATE TABLE IF NOT EXISTS pedidos (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo       TEXT    NOT NULL UNIQUE,        -- código del recibo, ej. KV-7F3K9Q
         usuario_id   INTEGER NOT NULL REFERENCES usuarios(id),
         fecha        TEXT    NOT NULL,
-        estado       TEXT    NOT NULL CHECK (estado IN ('pendiente', 'cancelado')),
+        estado       TEXT    NOT NULL
+                     CHECK (estado IN ('pendiente', 'entregado', 'no_recogido', 'cancelado')),
         metodo_pago  TEXT    NOT NULL,
         total        REAL    NOT NULL CHECK (total >= 0)
     );
@@ -86,6 +91,7 @@ class BaseDatos:
     );
 
     CREATE INDEX IF NOT EXISTS idx_pedidos_usuario    ON pedidos(usuario_id);
+    CREATE INDEX IF NOT EXISTS idx_pedidos_fecha      ON pedidos(fecha);
     CREATE INDEX IF NOT EXISTS idx_detalle_pedido     ON detalle_pedido(pedido_id);
     CREATE INDEX IF NOT EXISTS idx_productos_tipo     ON productos(tipo, categoria_id);
     """
@@ -161,6 +167,8 @@ class BaseDatos:
             Path(self._ruta).parent.mkdir(parents=True, exist_ok=True)
         if self._es_version_1():
             self._migrar_desde_version_1()
+        if self._pedidos_sin_codigo():
+            self._migrar_pedidos_a_version_4()
         with self.conexion() as con:
             con.executescript(self.ESQUEMA)
             self._agregar_columna_imagen(con)
@@ -180,6 +188,59 @@ class BaseDatos:
         columnas = [fila["name"] for fila in con.execute("PRAGMA table_info(productos)")]
         if "imagen" not in columnas:
             con.execute("ALTER TABLE productos ADD COLUMN imagen TEXT")
+
+    def _pedidos_sin_codigo(self):
+        """True si la tabla pedidos existe pero es de antes de los recibos (versión 3 o menos)."""
+        with self.conexion() as con:
+            columnas = [fila["name"] for fila in con.execute("PRAGMA table_info(pedidos)")]
+        return bool(columnas) and "codigo" not in columnas
+
+    def _migrar_pedidos_a_version_4(self):
+        """Versión 3 → 4: rehace la tabla pedidos con la columna codigo y los estados nuevos.
+
+        SQLite no permite cambiar una regla CHECK, así que se crea la tabla nueva,
+        se copian los pedidos (con los mismos id, para que detalle_pedido siga
+        apuntando bien), se le da un código de recibo a cada pedido viejo y se
+        reemplaza la tabla. Todo en una transacción.
+        """
+        conexion = sqlite3.connect(self._ruta)
+        try:
+            conexion.execute("PRAGMA foreign_keys = OFF")
+            conexion.executescript("""
+                BEGIN;
+                CREATE TABLE pedidos_nueva (
+                    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                    codigo       TEXT    NOT NULL UNIQUE,
+                    usuario_id   INTEGER NOT NULL REFERENCES usuarios(id),
+                    fecha        TEXT    NOT NULL,
+                    estado       TEXT    NOT NULL
+                                 CHECK (estado IN ('pendiente', 'entregado', 'no_recogido', 'cancelado')),
+                    metodo_pago  TEXT    NOT NULL,
+                    total        REAL    NOT NULL CHECK (total >= 0)
+                );
+                INSERT INTO pedidos_nueva (id, codigo, usuario_id, fecha, estado, metodo_pago, total)
+                    SELECT id, 'TEMPORAL-' || id, usuario_id, fecha, estado, metodo_pago, total
+                    FROM pedidos;
+            """)
+            usados = set()
+            for (pedido_id,) in conexion.execute("SELECT id FROM pedidos_nueva").fetchall():
+                codigo = Pedido.generar_codigo()
+                while codigo in usados:
+                    codigo = Pedido.generar_codigo()
+                usados.add(codigo)
+                conexion.execute("UPDATE pedidos_nueva SET codigo = ? WHERE id = ?", (codigo, pedido_id))
+            conexion.execute("DROP TABLE pedidos")
+            conexion.execute("ALTER TABLE pedidos_nueva RENAME TO pedidos")
+            problemas = conexion.execute("PRAGMA foreign_key_check").fetchall()
+            if problemas:
+                raise sqlite3.IntegrityError(f"La actualización dejó datos inconsistentes: {problemas}")
+            conexion.commit()
+        except Exception:
+            if conexion.in_transaction:
+                conexion.rollback()
+            raise
+        finally:
+            conexion.close()
 
     def _es_version_1(self):
         """True si existe la tabla productos con la columna de texto 'categoria'."""

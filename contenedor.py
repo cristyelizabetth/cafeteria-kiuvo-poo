@@ -11,7 +11,8 @@ from base_datos import BaseDatos
 from dao import CategoriaDAO, PedidoDAO, ProductoDAO, UsuarioDAO
 from imagenes import GestorImagenes
 from seguridad import ProtectorCSRF
-from servicios import ServicioAutenticacion, ServicioInventario, ServicioPedidos
+from servicios import (ServicioAutenticacion, ServicioInventario, ServicioPedidos,
+                       ServicioReportes)
 
 CLAVE_EXTENSION = "kiuvo"
 
@@ -26,6 +27,7 @@ class Contenedor:
     autenticacion: ServicioAutenticacion
     servicio_pedidos: ServicioPedidos
     inventario: ServicioInventario
+    reportes: ServicioReportes
     csrf: ProtectorCSRF
     imagenes: GestorImagenes
 

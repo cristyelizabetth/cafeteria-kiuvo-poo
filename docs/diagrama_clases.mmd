@@ -124,11 +124,16 @@ classDiagram
         +str metodo_pago
         #EstadoPedido _estado
         +str fecha
+        #str _codigo
+        +generar_codigo()$ str
+        +normalizar_codigo(texto)$ str
         +desde_carrito(usuario, carrito, metodo)$ Pedido
         +total float
         +pertenece_a(usuario) bool
         +puede_cancelarse() bool
         +cancelar()
+        +marcar_entregado()
+        +marcar_no_recogido()
     }
     class ItemPedido {
         +int producto_id
@@ -140,10 +145,29 @@ classDiagram
     class EstadoPedido {
         <<enumeration>>
         PENDIENTE
+        ENTREGADO
+        NO_RECOGIDO
         CANCELADO
+        +es_final bool
     }
     Pedido "1" *-- "1..*" ItemPedido : contiene
     Pedido "1" --> "1" EstadoPedido
+    class ReporteMensual {
+        #int _anio
+        #int _mes
+        #list _lineas
+        +validar_mes(anio, mes)$
+        +rango_fechas(anio, mes)$
+        +total_vendido float
+        +pedidos(estado) int
+        +a_csv() str
+    }
+    class LineaReporte {
+        +str producto
+        +int unidades
+        +float total
+    }
+    ReporteMensual "1" *-- "0..*" LineaReporte : contiene
     Pedido "0..*" --> "1" Usuario : hecho por
     Pedido ..> Carrito : se crea desde
 
@@ -184,11 +208,14 @@ classDiagram
         +buscar_id(con, nombre, tipo)$ int
     }
     class ProductoDAO {
+        +listar_existencias_bajas() list
         +existe_nombre(nombre, tipo, excluir_id) bool
         +contar() int
         -_guardar_detalle(con, producto)$
     }
     class PedidoDAO {
+        +buscar_por_codigo(codigo) Pedido
+        +reporte_mensual(anio, mes) ReporteMensual
         +cancelar(pedido)
         +contar(estado) int
     }
@@ -202,6 +229,7 @@ classDiagram
     ProductoDAO ..> Producto : crea
     ProductoDAO ..> CategoriaDAO
     PedidoDAO ..> Pedido : crea
+    PedidoDAO ..> ReporteMensual : crea
 
     class BaseDatos {
         #str _ruta
@@ -209,6 +237,7 @@ classDiagram
         +conexion() transacción
         +inicializar()
         -_migrar_desde_version_1()
+        -_migrar_pedidos_a_version_4()
     }
 
     %% ================= SERVICIOS (lógica) =================
@@ -224,8 +253,20 @@ classDiagram
         #PedidoDAO _pedidos
         +confirmar_compra(usuario, carrito, metodo)
         +cancelar(usuario, pedido_id)
+        +recibo(usuario, pedido_id) Pedido
+        +buscar_por_codigo(texto) Pedido
+        +marcar_entregado(pedido_id)
+        +marcar_no_recogido(pedido_id)
         +pedidos_de(usuario) list
     }
+    class ServicioReportes {
+        #PedidoDAO _pedidos
+        #ProductoDAO _productos
+        +reporte(texto_mes) ReporteMensual
+        +existencias_bajas() list
+    }
+    ServicioReportes "1" o-- "1" PedidoDAO
+    ServicioReportes "1" o-- "1" ProductoDAO
     class ServicioInventario {
         #ProductoDAO _productos
         #GestorImagenes _imagenes
@@ -285,6 +326,9 @@ classDiagram
     class ImagenInvalida {
         <<exception>>
     }
+    class CambioEstadoInvalido {
+        <<exception>>
+    }
     class ErrorBaseDatos {
         <<exception>>
     }
@@ -303,6 +347,8 @@ classDiagram
     ErrorCafeteria <|-- DatosInvalidos
     ErrorCafeteria <|-- InventarioInsuficiente
     ErrorCafeteria <|-- ImagenInvalida
+    ErrorCafeteria <|-- CambioEstadoInvalido
+    Pedido ..> CambioEstadoInvalido : lanza
     ErrorCafeteria <|-- ErrorBaseDatos
     ErrorBaseDatos <|-- RegistroDuplicado
     ErrorBaseDatos <|-- RegistroEnUso

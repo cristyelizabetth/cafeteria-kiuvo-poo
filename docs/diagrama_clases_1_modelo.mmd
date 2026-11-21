@@ -123,11 +123,16 @@ classDiagram
         +str metodo_pago
         #EstadoPedido _estado
         +str fecha
+        #str _codigo
+        +generar_codigo()$ str
+        +normalizar_codigo(texto)$ str
         +desde_carrito(usuario, carrito, metodo)$ Pedido
         +total float
         +pertenece_a(usuario) bool
         +puede_cancelarse() bool
         +cancelar()
+        +marcar_entregado()
+        +marcar_no_recogido()
     }
     class ItemPedido {
         +int producto_id
@@ -139,10 +144,29 @@ classDiagram
     class EstadoPedido {
         <<enumeration>>
         PENDIENTE
+        ENTREGADO
+        NO_RECOGIDO
         CANCELADO
+        +es_final bool
     }
     Pedido "1" *-- "1..*" ItemPedido : contiene
     Pedido "1" --> "1" EstadoPedido
+    class ReporteMensual {
+        #int _anio
+        #int _mes
+        #list _lineas
+        +validar_mes(anio, mes)$
+        +rango_fechas(anio, mes)$
+        +total_vendido float
+        +pedidos(estado) int
+        +a_csv() str
+    }
+    class LineaReporte {
+        +str producto
+        +int unidades
+        +float total
+    }
+    ReporteMensual "1" *-- "0..*" LineaReporte : contiene
     Pedido "0..*" --> "1" Usuario : hecho por
     Pedido ..> Carrito : se crea desde
 

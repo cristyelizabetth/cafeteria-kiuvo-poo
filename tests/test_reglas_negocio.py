@@ -83,5 +83,59 @@ class PruebasReglasNegocio(BaseMemoria):
                                             "precio": "1", "existencias": "1"})
 
 
+
+# ======================================================================
+# Fallo provocado: dos personas compran el ÚLTIMO producto al mismo tiempo
+# ======================================================================
+class PruebasCompraSimultanea(unittest.TestCase):
+    """Aquí la base va en un ARCHIVO (no en :memory:), porque cada compra
+    usa su propia conexión, como pasa en el sitio real con dos navegadores."""
+
+    def test_dos_personas_compran_el_ultimo_al_mismo_tiempo(self):
+        import os
+        import tempfile
+        import threading
+        from base_datos import BaseDatos
+        from dao import CategoriaDAO, PedidoDAO, ProductoDAO, UsuarioDAO
+        from modelos import Estudiante, ProductoTienda
+
+        with tempfile.TemporaryDirectory() as carpeta:
+            bd = BaseDatos(os.path.join(carpeta, "kiuvo.db"))
+            bd.inicializar()
+            CategoriaDAO(bd).asegurar((ProductoTienda,))
+            productos, pedidos, usuarios = ProductoDAO(bd), PedidoDAO(bd), UsuarioDAO(bd)
+            ultimo = productos.insertar(ProductoTienda("Último brownie", "", "Postres", 1.5, 1))  # solo hay 1
+            ana = usuarios.insertar(Estudiante.crear("Ana", "ana@kiuvo.com", "Clave1234", "p", "r"))
+            luis = usuarios.insertar(Estudiante.crear("Luis", "luis@kiuvo.com", "Clave1234", "p", "r"))
+
+            # Las dos lo tienen en el carrito (cuando lo agregaron, sí había 1)
+            carritos = {}
+            for persona in (ana, luis):
+                carritos[persona.id] = Carrito()
+                carritos[persona.id].agregar(productos.buscar_por_id(ultimo.id), 1)
+
+            servicio = ServicioPedidos(productos, pedidos)
+            salida = threading.Barrier(2)          # para que las dos den "Pagar" a la vez
+            resultados = []
+
+            def comprar(persona):
+                salida.wait()
+                try:
+                    servicio.confirmar_compra(persona, carritos[persona.id], "caja")
+                    resultados.append("compró")
+                except InventarioInsuficiente:
+                    resultados.append("ya no había")
+
+            hilos = [threading.Thread(target=comprar, args=(p,)) for p in (ana, luis)]
+            for h in hilos:
+                h.start()
+            for h in hilos:
+                h.join()
+
+            self.assertEqual(sorted(resultados), ["compró", "ya no había"])   # solo una lo consigue
+            self.assertEqual(productos.buscar_por_id(ultimo.id).existencias, 0)  # nunca -1
+            self.assertEqual(pedidos.contar(), 1)                                 # un solo pedido
+
+
 if __name__ == "__main__":
     unittest.main()

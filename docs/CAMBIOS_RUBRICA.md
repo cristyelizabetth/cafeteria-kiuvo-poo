@@ -107,3 +107,29 @@ Guía completa para la presentación: `docs/CHECKPOINT_SEMANA14.md`.
 | `SEGURIDAD.md` (nuevo) | Qué atacamos y qué pasó |
 | `docs/esquema.sql` (nuevo) | Esquema de la base de datos |
 | `docs/` | Diagramas UML con las excepciones nuevas |
+
+## Versión final: rúbrica de la presentación final y pedidos de la gerente
+
+Guion de 10 minutos con las 6 evidencias: `docs/PRESENTACION_FINAL.md`.
+
+| Pedido | Qué se hizo |
+|---|---|
+| Rúbrica: **consulta propia del negocio** | `PedidoDAO.reporte_mensual` (ventas por producto con `GROUP BY`) y `ProductoDAO.listar_existencias_bajas` (con `CASE`), ambas en SQL dentro del DAO |
+| Gerente: **cuadros de fin de mes** | Página **Reportes** del admin: ventas del mes por producto, total, pedidos entregados y no recogidos, y descarga para Excel |
+| Gerente: **código de recibo** y **aviso de que la cafetería recibió el pedido** | Al pagar, el estudiante ve su recibo con un código como `KV-7F3K9Q` |
+| Gerente: **alumnos que pagan y no llegan** | Estados **Entregado** y **No recogido**. El admin busca el código en la barra y marca la entrega |
+| Gerente: **colores naranja, azul y negro + logo** | Paleta nueva (naranja del logo, navy y negro) y el logo de Kiuvo en la barra y como ícono |
+
+| Archivo | Cambio |
+|---|---|
+| `modelos/pedido.py` | Código de recibo (propiedad que valida), estados `ENTREGADO` y `NO_RECOGIDO`, `marcar_entregado()` y `marcar_no_recogido()` |
+| `modelos/reporte.py` (nuevo) | `ReporteMensual` y `LineaReporte` |
+| `modelos/excepciones.py` | `CambioEstadoInvalido` |
+| `base_datos.py` | Versión 4: columna `pedidos.codigo` (`UNIQUE`) y estados nuevos. Las bases viejas se actualizan solas sin perder pedidos |
+| `dao/pedido_dao.py`, `dao/producto_dao.py` | `buscar_por_codigo`, `reporte_mensual`, `listar_existencias_bajas` |
+| `servicios.py`, `app.py`, `contenedor.py` | Recibo, búsqueda por código y entregas en `ServicioPedidos`; nuevo `ServicioReportes` |
+| `rutas/estudiante.py`, `rutas/admin.py` | Página de recibo; entregas; reportes y descarga |
+| `templates/` | `estudiante/recibo.html` y `admin/reportes.html` (nuevas), pedidos, panel, barra con logo |
+| `static/css/estilos.css`, `static/img/marca/` (nuevo) | Colores de Kiuvo y logo |
+| `tests/test_entregas_y_reportes.py` (nuevo) | 23 pruebas nuevas (111 en total) |
+| `docs/` | UML, esquema, guías y `PRESENTACION_FINAL.md` |

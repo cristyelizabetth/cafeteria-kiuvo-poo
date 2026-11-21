@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block titulo %}Reporte de {{ reporte.nombre }}{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <h1>Reporte de ventas</h1>
+  <p>Lo que se vendió en el mes, producto por producto. Los pedidos cancelados no cuentan como venta.</p>
+</header>
+
+<form method="get" action="{{ url_for('admin.reportes') }}" class="buscador">
+  <label for="mes">Mes</label>
+  <input id="mes" type="month" name="mes" value="{{ reporte.clave }}" required>
+  <button type="submit" class="boton">Ver reporte</button>
+  <a class="boton boton--borde" href="{{ url_for('admin.descargar_reporte', mes=reporte.clave) }}">Descargar para Excel</a>
+</form>
+
+<h2>{{ reporte.nombre }}</h2>
+
+<div class="indicadores">
+  <div class="indicador"><strong>{{ reporte.total_vendido|dinero }}</strong><span>Total vendido</span></div>
+  <div class="indicador"><strong>{{ reporte.unidades_vendidas }}</strong><span>Unidades vendidas</span></div>
+  <div class="indicador"><strong>{{ reporte.pedidos('entregado') }}</strong><span>Pedidos entregados</span></div>
+  <div class="indicador indicador--alerta"><strong>{{ reporte.pedidos('no_recogido') }}</strong><span>No recogidos ({{ reporte.dinero('no_recogido')|dinero }})</span></div>
+</div>
+
+<section class="seccion">
+  <h2>Ventas por producto</h2>
+  {% if reporte.esta_vacio %}
+    <p class="nota">No hubo ventas en {{ reporte.nombre|lower }}.</p>
+  {% else %}
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead><tr><th>Producto</th><th>Tipo</th><th class="numero">Unidades</th><th class="numero">Total</th></tr></thead>
+        <tbody>
+          {% for linea in reporte.lineas %}
+            <tr>
+              <td data-titulo="Producto">{{ linea.producto }}</td>
+              <td data-titulo="Tipo">{{ linea.tipo_texto }}</td>
+              <td data-titulo="Unidades" class="numero">{{ linea.unidades }}</td>
+              <td data-titulo="Total" class="numero">{{ linea.total|dinero }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="tabla__total">
+            <td data-titulo="">Total</td><td></td>
+            <td data-titulo="Unidades" class="numero">{{ reporte.unidades_vendidas }}</td>
+            <td data-titulo="Total" class="numero">{{ reporte.total_vendido|dinero }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  {% endif %}
+</section>
+
+<section class="seccion">
+  <h2>Pedidos del mes</h2>
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead><tr><th>Estado</th><th class="numero">Pedidos</th><th class="numero">Dinero</th></tr></thead>
+      <tbody>
+        {% for estado, texto in [('entregado', 'Entregados'), ('pendiente', 'Pendientes de retiro'), ('no_recogido', 'No recogidos'), ('cancelado', 'Cancelados')] %}
+          <tr>
+            <td data-titulo="Estado"><span class="estado estado--{{ estado }}">{{ texto }}</span></td>
+            <td data-titulo="Pedidos" class="numero">{{ reporte.pedidos(estado) }}</td>
+            <td data-titulo="Dinero" class="numero">{{ reporte.dinero(estado)|dinero }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -33,6 +33,11 @@ class PedidoNoCancelable(ErrorCafeteria):
     """El pedido ya no se puede cancelar."""
 
 
+class CambioEstadoInvalido(ErrorCafeteria):
+    """Se intentó pasar un pedido a un estado que no le corresponde
+    (por ejemplo, entregar un pedido cancelado)."""
+
+
 class CredencialesInvalidas(ErrorCafeteria):
     """Correo, contraseña o respuesta de seguridad incorrectos."""
 

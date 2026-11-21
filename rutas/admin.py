@@ -1,6 +1,7 @@
 """Páginas del administrador: panel, inventario, productos y pedidos."""
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import (Blueprint, Response, abort, flash, redirect, render_template, request,
+                   url_for)
 
 import contenedor
 import sesion
@@ -34,7 +35,7 @@ def panel():
         "pendientes": c.pedidos.contar(EstadoPedido.PENDIENTE.value),
         "estudiantes": c.usuarios.contar("estudiante"),
     }
-    alertas = [p for p in productos if p.activo and (p.existencias == 0 or p.existencias_bajas())]
+    alertas = c.reportes.existencias_bajas()        # consulta propia (SQL en ProductoDAO)
     return render_template("admin/panel.html", resumen=resumen, alertas=alertas)
 
 
@@ -139,10 +140,79 @@ def eliminar_producto(producto_id):
 @bp.route("/pedidos")
 @sesion.solo_administradores
 def pedidos():
+    """Lista de pedidos. Con ?codigo=KV-... busca el pedido que el estudiante muestra en la barra."""
+    c = contenedor.obtener()
+    nombres_pago = {m.CLAVE: m.nombre() for m in MetodoPago.disponibles()}
+    codigo = request.args.get("codigo", "").strip()
+    encontrado = None
+    if codigo:
+        try:
+            encontrado = c.servicio_pedidos.buscar_por_codigo(codigo)
+        except ErrorCafeteria as error:
+            flash(str(error), "error")
     estado = request.args.get("estado")
     if estado not in [e.value for e in EstadoPedido]:
         estado = None
-    lista = contenedor.obtener().pedidos.listar(estado=estado)
-    nombres_pago = {m.CLAVE: m.nombre() for m in MetodoPago.disponibles()}
+    lista = c.pedidos.listar(estado=estado)
     return render_template("admin/pedidos.html", pedidos=lista, estados=list(EstadoPedido),
-                           estado_actual=estado, nombres_pago=nombres_pago)
+                           estado_actual=estado, nombres_pago=nombres_pago,
+                           codigo=codigo, encontrado=encontrado)
+
+
+@bp.route("/pedidos/<int:pedido_id>/entregado", methods=["POST"])
+@sesion.solo_administradores
+def marcar_entregado(pedido_id):
+    try:
+        pedido = contenedor.obtener().servicio_pedidos.marcar_entregado(pedido_id)
+    except ErrorCafeteria as error:
+        flash(str(error), "error")
+    else:
+        flash(f"Pedido {pedido.codigo} de {pedido.nombre_cliente} entregado.", "exito")
+    return _regresar_a_pedidos()
+
+
+@bp.route("/pedidos/<int:pedido_id>/no-recogido", methods=["POST"])
+@sesion.solo_administradores
+def marcar_no_recogido(pedido_id):
+    try:
+        pedido = contenedor.obtener().servicio_pedidos.marcar_no_recogido(pedido_id)
+    except ErrorCafeteria as error:
+        flash(str(error), "error")
+    else:
+        flash(f"Pedido {pedido.codigo} marcado como no recogido.", "aviso")
+    return _regresar_a_pedidos()
+
+
+def _regresar_a_pedidos():
+    anterior = request.referrer or ""
+    if anterior.startswith(request.host_url):
+        return redirect(anterior)
+    return redirect(url_for("admin.pedidos"))
+
+
+@bp.route("/reportes")
+@sesion.solo_administradores
+def reportes():
+    """Reporte mensual de ventas (los cuadros de fin de mes de la gerencia)."""
+    c = contenedor.obtener()
+    try:
+        reporte = c.reportes.reporte(request.args.get("mes"))
+    except ErrorCafeteria as error:
+        flash(str(error), "error")
+        reporte = c.reportes.reporte()             # vuelve al mes actual
+    return render_template("admin/reportes.html", reporte=reporte)
+
+
+@bp.route("/reportes/descargar")
+@sesion.solo_administradores
+def descargar_reporte():
+    try:
+        reporte = contenedor.obtener().reportes.reporte(request.args.get("mes"))
+    except ErrorCafeteria as error:
+        flash(str(error), "error")
+        return redirect(url_for("admin.reportes"))
+    return Response(
+        reporte.a_csv(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=reporte-ventas-{reporte.clave}.csv"},
+    )

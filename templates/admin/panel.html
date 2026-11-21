@@ -17,10 +17,12 @@
 <div class="acciones">
   <a class="boton" href="{{ url_for('admin.nuevo_producto', tipo='almuerzo') }}">+ Nuevo almuerzo</a>
   <a class="boton boton--borde" href="{{ url_for('admin.nuevo_producto', tipo='tienda') }}">+ Nuevo producto de tienda</a>
+  <a class="boton boton--borde" href="{{ url_for('admin.reportes') }}">Reporte del mes</a>
 </div>
 
 <section class="seccion">
   <h2>Necesitan atención</h2>
+  <p class="nota">Productos visibles que están agotados o por agotarse, de menos a más existencias.</p>
   {% if alertas %}
     <div class="tabla-contenedor">
       <table class="tabla">
